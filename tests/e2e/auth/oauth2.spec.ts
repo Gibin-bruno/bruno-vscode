@@ -89,10 +89,8 @@ async function fillClientCredentialsAndFetchToken(
 }
 
 // No reset between tests: the token store is shared by every worker, and tokens are random,
-// so one test never sees another's. That also lets these tests run in parallel.
+// so one test never sees another's.
 test.describe('OAuth2 Authentication', () => {
-  test.describe.configure({ mode: 'parallel' });
-
   // ─── Client Credentials Grant ────────────────────────────────────────
 
   test('Client Credentials (body placement): fetch token and send authenticated request', async ({ page, tmpDir }) => {
