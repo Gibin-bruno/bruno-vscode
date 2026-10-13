@@ -24,7 +24,10 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     openCollectionButton: () => frame.getByTestId('collections-header-add-menu-open'),
     addMenuImport: () => frame.getByTestId('collections-header-add-menu-import'),
     actionsMenu: () => frame.getByTestId('collection-actions'),
-    actionsItem: (id: string) => frame.getByTestId(`collection-actions-${id}`)
+    actionMenuButton: (id: string) => frame.getByTestId(`collection-actions-${id}`),
+    collectionMenuOptions: (name: string) =>
+      frame.getByTestId('sidebar-collection-row').filter({ hasText: name }).getByTestId('collection-actions'),
+    runCollectionButton: () => frame.getByTestId('collection-actions-run')
   },
   importCollection: {
     container: () => frame.getByTestId('import-collection-container'),
@@ -247,5 +250,27 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     // Text of an incoming message in the WS response pane.
     incomingMessage: () => frame.locator('.ws-message.ws-incoming .message-content'),
     errorMessage: () => frame.locator('.ws-message.ws-error .message-content')
+  },
+   runner: {
+    runCollectionButton: () => frame.getByRole('button', { name: 'Run Collection' }),
+    runAgainButton: () => frame.getByRole('button', { name: 'Run Again' }),
+    delayInput: () => frame.getByRole('spinbutton'),
+    filterByTagsRadio: () => frame.getByLabel('Filter requests with tags'),
+    // Both fields share data-testid="tag-input". Scope each one to its label so the id resolves to one element.
+    includeTagInput: () =>
+      frame.getByText('Included tags:', { exact: true }).locator('..').getByTestId('tag-input'),
+    excludeTagInput: () =>
+      frame.getByText('Excluded tags:', { exact: true }).locator('..').getByTestId('tag-input'),
+    // Request Settings has a single tag field, so the id is unique there.
+    requestTagInput: () => frame.getByTestId('tag-input'),
+    // CodeMirror's hint list has no role or test id.
+    tagSuggestionList: () => frame.locator('.CodeMirror-hints'),
+    tagChipButton: (tag: string) => frame.getByRole('button', { name: tag }),
+    savedToastText: () => frame.getByText('Request saved successfully'),
+    requestCountText: () => frame.getByText(/requests in this collection/),
+    // Result block has no test id; the name and status sit together in this display.
+    resultDisplay: (name: string) => frame.locator('.item-path').filter({ hasText: name }),
+    filterButton: (label: 'All' | 'Passed' | 'Failed' | 'Skipped') =>
+      frame.getByRole('button', { name: label })
   }
 });
