@@ -233,10 +233,6 @@ test.describe('Prompt variables — HTTP send', () => {
 
 test.describe('Prompt variables — OAuth2', () => {
 
-  test.beforeEach(async () => {
-    await fetch(`${SERVER}/api/auth/oauth2/reset`, { method: 'POST' });
-  });
-
   test('prompts in OAuth2 config are resolved when fetching the token', async ({ page, tmpDir }) => {
     const sidebar = await setupCollection(page, tmpDir, 'PV OAuth2');
 

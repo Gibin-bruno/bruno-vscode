@@ -88,11 +88,9 @@ async function fillClientCredentialsAndFetchToken(
   await expect(getTokenBtn).toBeEnabled({ timeout: 5_000 });
 }
 
+// No reset between tests: the token store is shared by every worker, and tokens are random,
+// so one test never sees another's.
 test.describe('OAuth2 Authentication', () => {
-
-  test.beforeEach(async () => {
-    await fetch(`${TEST_SERVER}/api/auth/oauth2/reset`, { method: 'POST' });
-  });
 
   // ─── Client Credentials Grant ────────────────────────────────────────
 

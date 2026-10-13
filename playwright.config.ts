@@ -7,6 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   // Each worker launches its own VS Code instance; locally they run one at a time.
   workers: process.env.CI ? 3 : 1,
+  globalSetup: './tests/e2e/global-setup.ts',
   globalTeardown: './tests/e2e/global-teardown.ts',
   reporter: process.env.CI ? [['list'], ['html']] : [['list']],
   use: {
