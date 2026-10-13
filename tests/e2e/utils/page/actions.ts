@@ -114,10 +114,13 @@ export async function openBrunoSidebar(page: Page): Promise<Frame> {
 async function mockIpcInvoke(frame: Frame, channelName: string, dirPath: string): Promise<void> {
   await frame.evaluate(({ channelName, dirPath }) => {
     const ipc = (window as any).ipcRenderer;
-    const originalInvoke = ipc.invoke.bind(ipc);
+    // Reuse the real invoke if a mock is still pending, so mocking again replaces it rather than stacking.
+    const originalInvoke = ipc.__originalInvoke ?? ipc.invoke.bind(ipc);
+    ipc.__originalInvoke = originalInvoke;
     ipc.invoke = async (channel: string, ...args: any[]) => {
       if (channel === channelName) {
         ipc.invoke = originalInvoke;
+        delete ipc.__originalInvoke;
         return dirPath;
       }
       return originalInvoke(channel, ...args);
@@ -160,12 +163,13 @@ export async function createCollection(
   await editor.locator('#collectionName').fill(name);
 
   // The location input is readonly and opens a native file dialog via IPC.
-  // Mock the IPC call to return our path, then click Browse.
-  await mockBrowseDirectory(editor, location);
-  await editor.locator('.browse-button').click();
-
-  // Wait for formik to pick up the value before submitting
-  await expect(editor.locator('#collectionLocation')).toHaveValue(location, { timeout: 5_000 });
+  // Mock the IPC call to return our path, then click Browse. On a loaded CI runner the first
+  // attempt sometimes leaves the field empty, so mock and click again until formik has the value.
+  await expect(async () => {
+    await mockBrowseDirectory(editor, location);
+    await editor.locator('.browse-button').click();
+    await expect(editor.locator('#collectionLocation')).toHaveValue(location, { timeout: 3_000 });
+  }).toPass({ timeout: 15_000 });
 
   // The format selector lives behind the "Options" toggle; only expand it when
   // we need a non-default format.
