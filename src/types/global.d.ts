@@ -20,10 +20,6 @@ declare global {
     jsonlint: {
       parse: (text: string) => unknown;
     };
-    JSHINT: {
-      (source: string, options?: object): boolean;
-      errors: Array<{ reason: string; line: number; character: number }>;
-    };
     // Prompt for variables function used by Redux actions
     promptForVariables?: (prompts: string[]) => Promise<Record<string, string>>;
   }

@@ -12,7 +12,6 @@ import { defineCodeMirrorBrunoVariablesMode } from 'utils/common/codemirror';
 import { setupAutoComplete } from 'utils/codemirror/autocomplete';
 import StyledWrapper from './StyledWrapper';
 import * as jsonlint from '@prantlf/jsonlint';
-import { JSHINT } from 'jshint';
 import stripJsonComments from 'strip-json-comments';
 import { getAllVariables } from 'utils/collections';
 import { setupLinkAware } from 'utils/codemirror/linkAware';
@@ -22,7 +21,6 @@ import type { Collection, Item } from '@bruno-types/collection';
 
 const CodeMirror = require('codemirror');
 window.jsonlint = jsonlint;
-window.JSHINT = JSHINT;
 
 const TAB_SIZE = 2;
 

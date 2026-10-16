@@ -5,8 +5,6 @@
  * Copyright (C) 2017 by Marijn Haverbeke <marijnh@gmail.com> and others
  */
 
-import { JSHINT } from 'jshint';
-
 let CodeMirror: any;
 const SERVER_RENDERED = typeof window === 'undefined' || (global as Record<string, any>)['PREVENT_CODEMIRROR_RENDER'] === true;
 
@@ -14,14 +12,28 @@ if (!SERVER_RENDERED) {
   CodeMirror = require('codemirror');
   const { filter } = require('lodash');
 
-  function validator(text: any, options: any) {
-    if (!window.JSHINT) {
-      if (window.console) {
-        window.console.error('Error: window.JSHINT not defined, CodeMirror JavaScript linting cannot run.');
-      }
-      return [];
-    }
+  // JSHint is large, so it is loaded on first lint rather than with the webview bundle
+  let JSHINT: any = null;
+  let jshintLoading: Promise<void> | null = null;
+  const loadJshint = () => {
+    jshintLoading ||= import('jshint').then((mod) => {
+      JSHINT = mod.JSHINT;
+    });
+    return jshintLoading;
+  };
 
+  // The lint addon accepts a Promise of annotations, which only happens on the first lint
+  function validator(text: any, options: any) {
+    if (!JSHINT) {
+      return loadJshint().then(() => lint(text, options), (err): any[] => {
+        console.error('Failed to load JSHint, CodeMirror JavaScript linting cannot run.', err);
+        return [];
+      });
+    }
+    return lint(text, options);
+  }
+
+  function lint(text: any, options: any) {
     const defaultOptions = {
       esversion: 11,
       expr: true,
@@ -47,9 +59,7 @@ if (!SERVER_RENDERED) {
     if (!options.indent)
       // JSHint error.character actually is a column index, this fixes underlining on lines using tabs for indentation
       options.indent = 1; // JSHint default value is 4
-    // @ts-expect-error - JSHINT accepts 3 arguments (source, options, globals) but types only define 1-2
     JSHINT(text, options, options.globals);
-    // @ts-expect-error - JSHINT.data() returns an object with errors property, but types are incomplete
     var errors = JSHINT.data().errors,
       result: any = [];
 
