@@ -84,6 +84,19 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     varSecretCheckbox: (name: string) => frame.getByTestId(`env-var-secret-${name}`),
     save: () => frame.getByTestId('save-env')
   },
+  dotEnv: {
+    section: () => frame.getByTestId('dotenv-files-section'),
+    createFile: () => frame.getByTestId('create-dotenv-file'),
+    file: (filename: string) => frame.getByTestId(`dotenv-file-${filename}`),
+    varRow: (name: string) => frame.getByTestId(`dotenv-var-row-${name}`),
+    varNameInputs: () => frame.locator('[data-testid^="dotenv-var-row-"] input[type="text"]'),
+    viewTable: () => frame.getByTestId('dotenv-view-table'),
+    viewRaw: () => frame.getByTestId('dotenv-view-raw'),
+    rawEditor: () => frame.getByTestId('dotenv-raw-editor').locator('.CodeMirror'),
+    save: () => frame.getByTestId('save-dotenv'),
+    saveRaw: () => frame.getByTestId('save-dotenv-raw'),
+    deleteFile: () => frame.getByTestId('delete-dotenv-file')
+  },
   requestUrl: {
     editor: () => frame.locator('#request-url'),
     highlightedToken: (name: string) =>
@@ -237,6 +250,10 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     passphraseEditor: () => frame.getByTestId('client-cert-passphrase').locator('.CodeMirror'),
     addButton: () => frame.getByTestId('add-client-cert'),
     saveButton: () => frame.getByTestId('collection-settings-save')
+  },
+  modal: {
+    confirm: () => frame.getByTestId('modal-confirm-button'),
+    cancel: () => frame.getByTestId('modal-cancel-button')
   },
   // A dropdown menu item, by its visible text.
   dropdownItem: (text: string) => frame.locator('.dropdown-item').filter({ hasText: text }),
