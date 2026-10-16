@@ -1,5 +1,6 @@
 
 import { AxiosResponse, AxiosError } from 'axios';
+import decomment from 'decomment';
 import { registerHandler, sendToWebview } from '../handlers';
 import { prepareRequest, BrunoRequest as PrepareRequestType } from './prepare-request';
 import { interpolateVars } from './interpolate-vars';
@@ -617,7 +618,11 @@ const getRequestData = (body: BrunoRequest['body']): unknown => {
 
   switch (body.mode) {
     case 'json':
-      return body.json || undefined;
+      try {
+        return body.json ? JSON.parse(decomment(body.json)) : undefined;
+      } catch {
+        return body.json;
+      }
 
     case 'text':
       return body.text || undefined;
