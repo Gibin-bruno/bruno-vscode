@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, forwardRef } from 'react';
 import { IconCaretDown } from '@tabler/icons';
 import MenuDropdown from 'ui/MenuDropdown';
 import StyledWrapper from './StyledWrapper';
@@ -23,14 +23,15 @@ const KEY = Object.freeze({ ENTER: 'Enter', ESCAPE: 'Escape' });
 
 const DEFAULT_METHOD = 'GET';
 
-const TriggerButton = ({
+const TriggerButton = forwardRef<HTMLButtonElement, TriggerButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>>(({
   method,
   methodSpanRef,
   showCaret,
   ...props
-}: TriggerButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
+}, ref) => {
   return (
     <button
+      ref={ref}
       type="button"
       className="cursor-pointer flex items-center gap-2 text-left w-full select-none px-2"
       {...props}
@@ -46,7 +47,7 @@ const TriggerButton = ({
       {showCaret && <IconCaretDown className="caret" size={14} strokeWidth={2} />}
     </button>
   );
-};
+});
 
 const HttpMethodSelector = ({
   method = DEFAULT_METHOD,

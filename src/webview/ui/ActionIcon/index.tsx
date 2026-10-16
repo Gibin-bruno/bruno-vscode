@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import StyledWrapper from './StyledWrapper';
 
 interface ActionIconProps {
@@ -34,7 +34,7 @@ interface ActionIconProps {
  * @param {Object} props.style - Style object to override the default variant style (e.g., 'width: 16px; min-width: 16px;')
  * @param {Object} props...rest - Other props passed to the underlying element
  */
-const ActionIcon = ({
+const ActionIcon = forwardRef(({
   children,
   variant = 'subtle',
   size = 'md',
@@ -47,11 +47,12 @@ const ActionIcon = ({
   color,
   style,
   ...rest
-}: any) => {
+}: any, ref: React.ForwardedRef<HTMLElement>) => {
   const classNames = ['action-icon', className].filter(Boolean).join(' ');
 
   return (
     <StyledWrapper
+      ref={ref}
       as={Component}
       $variant={variant}
       $size={size}
@@ -67,6 +68,6 @@ const ActionIcon = ({
       {children}
     </StyledWrapper>
   );
-};
+});
 
 export default ActionIcon;

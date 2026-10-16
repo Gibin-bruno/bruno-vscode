@@ -133,9 +133,7 @@ const ViewContainer: React.FC<ViewContainerProps> = ({ viewData }) => {
   const toggleDocs = useCallback(() => setShowGqlDocs((prev) => !prev), []);
 
   const handleGqlClickReference = useCallback((reference: any) => {
-    if (docExplorerRef.current) {
-      docExplorerRef.current.showDocForReference(reference);
-    }
+    docExplorerRef.current?.showDocForReference(reference);
     if (!showGqlDocs) {
       setShowGqlDocs(true);
     }

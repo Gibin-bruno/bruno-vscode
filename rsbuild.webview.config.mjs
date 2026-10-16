@@ -8,7 +8,8 @@ import { pluginNodePolyfill } from '@rsbuild/plugin-node-polyfill';
 export default defineConfig({
   plugins: [
     pluginNodePolyfill(),
-    pluginReact(),
+    // React is aliased to preact/compat below; React Fast Refresh does not work with Preact
+    pluginReact({ fastRefresh: false }),
     pluginStyledComponents(),
     pluginSass(),
     pluginBabel({
@@ -33,6 +34,13 @@ export default defineConfig({
       selectors: './src/webview/selectors',
       ui: './src/webview/ui',
       views: './src/webview/views',
+      // Run the webview on Preact via its React compatibility layer
+      'react/jsx-runtime': 'preact/jsx-runtime',
+      'react/jsx-dev-runtime': 'preact/jsx-runtime',
+      'react-dom/test-utils': 'preact/test-utils',
+      'react-dom/client': 'preact/compat/client',
+      'react-dom$': 'preact/compat',
+      'react$': 'preact/compat',
       // @usebruno package shims for browser compatibility
       '@usebruno/common/utils': './src/webview/shims/bruno-common-utils.ts',
       '@usebruno/converters': './src/webview/shims/bruno-converters.ts',

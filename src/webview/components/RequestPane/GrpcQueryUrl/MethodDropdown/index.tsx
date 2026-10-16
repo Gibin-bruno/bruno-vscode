@@ -8,7 +8,7 @@ import {
 } from 'components/Icons/Grpc';
 import SearchInput from 'components/SearchInput/index';
 import { search } from 'fast-fuzzy';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import { useTheme } from 'providers/Theme';
 import StyledWrapper from './StyledWrapper';
 
@@ -27,12 +27,11 @@ interface MethodDropdownProps {
 }
 
 interface MethodsDropdownIconProps {
-  ref?: React.Ref<HTMLDivElement>;
   selectedGrpcMethod: GrpcMethod | null;
   methodIcon?: React.ReactNode;
 }
 
-const MethodsDropdownIcon = ({ ref, selectedGrpcMethod, methodIcon }: MethodsDropdownIconProps) => {
+const MethodsDropdownIcon = forwardRef<HTMLDivElement, MethodsDropdownIconProps>(({ selectedGrpcMethod, methodIcon }, ref) => {
   return (
     <div ref={ref} className="method-dropdown-trigger" data-testid="grpc-method-dropdown-trigger">
       {selectedGrpcMethod && <div className="method-dropdown-trigger-icon">{methodIcon}</div>}
@@ -42,7 +41,7 @@ const MethodsDropdownIcon = ({ ref, selectedGrpcMethod, methodIcon }: MethodsDro
       <IconChevronDown className="method-dropdown-caret" size={14} strokeWidth={2} />
     </div>
   );
-};
+});
 
 const MethodDropdown = ({
   grpcMethods,

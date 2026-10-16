@@ -3,19 +3,29 @@
  * Provides a placeholder component for GraphQL documentation
  */
 
-import React from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
 
 interface DocExplorerProps {
   schema?: any;
   onClickType?: (type: any) => void;
   onClickField?: (field: any) => void;
+  children?: React.ReactNode;
+}
+
+export interface DocExplorerHandle {
+  showDocForReference: (reference: any) => void;
 }
 
 /**
  * GraphQL Documentation Explorer component
  * This is a placeholder - the full implementation would require the graphql-docs package
  */
-export const DocExplorer: React.FC<DocExplorerProps> = ({ schema }) => {
+export const DocExplorer = forwardRef<DocExplorerHandle, DocExplorerProps>(({ schema }, ref) => {
+  // Same handle as the real graphql-docs DocExplorer; the placeholder has no per-type docs to navigate to
+  useImperativeHandle(ref, () => ({
+    showDocForReference: () => {}
+  }), []);
+
   if (!schema) {
     return (
       <div style={{ padding: '16px', color: '#666' }}>
@@ -35,6 +45,6 @@ export const DocExplorer: React.FC<DocExplorerProps> = ({ schema }) => {
       </p>
     </div>
   );
-};
+});
 
 export default DocExplorer;

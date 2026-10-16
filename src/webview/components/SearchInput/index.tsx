@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { IconSearch, IconX } from '@tabler/icons';
 
 interface SearchInputProps {
@@ -10,14 +10,14 @@ interface SearchInputProps {
 }
 
 
-const SearchInput = ({
+const SearchInput = forwardRef<HTMLInputElement, any>(({
   searchText,
   setSearchText,
   placeholder = 'Search',
   className = '',
   onChange,
   ...props
-}: any) => {
+}, ref) => {
   const handleChange = (e: any) => {
     setSearchText(e.target.value);
     if (onChange) {
@@ -46,6 +46,7 @@ const SearchInput = ({
         autoFocus
         onChange={handleChange}
         {...props}
+        ref={ref}
       />
       {searchText !== '' && (
         <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
@@ -61,6 +62,6 @@ const SearchInput = ({
       )}
     </div>
   );
-};
+});
 
 export default SearchInput;
