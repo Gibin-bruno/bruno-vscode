@@ -21,6 +21,8 @@ import HeightBoundContainer from 'ui/HeightBoundContainer';
 import Settings from 'components/RequestPane/Settings';
 import ResponsiveTabs from 'ui/ResponsiveTabs';
 import AuthMode from '../Auth/AuthMode/index';
+import StatusDot from 'components/StatusDot';
+import { hasEffectiveAuth } from 'utils/auth';
 
 interface TAB_CONFIGProps {
   item?: React.ReactNode;
@@ -104,7 +106,22 @@ const GraphQLRequestPane = ({
     [dispatch, item.uid]
   );
 
-  const allTabs = useMemo(() => TAB_CONFIG.map(({ key, label }) => ({ key, label })), []);
+  const draftOrOriginal = item.draft || item;
+  const auth = get(draftOrOriginal, 'request.auth', {});
+
+  const hasAuth = useMemo(
+    () => hasEffectiveAuth(collection, item),
+    [item, auth.mode, collection]
+  );
+
+  const indicators: Record<string, React.ReactNode> = useMemo(() => ({
+    auth: hasAuth ? <StatusDot dataTestId="auth" /> : null,
+  }), [hasAuth]);
+
+  const allTabs = useMemo(
+    () => TAB_CONFIG.map(({ key, label }) => ({ key, label, indicator: indicators[key] })),
+    [indicators]
+  );
 
   const tabPanel = useMemo(() => {
     switch (requestPaneTab) {

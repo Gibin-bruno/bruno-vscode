@@ -1,14 +1,16 @@
-import { Frame, Page, Locator } from '@playwright/test';
+import { Frame, Page, Locator, FrameLocator } from '@playwright/test';
 
 /**
  * Centralised Playwright locators for the e2e suite.
  *
  * Bruno's UI runs inside VS Code webview iframes, so the factory takes a `Frame`
- * (or `Page`). It also accepts a `Locator` so callers can scope lookups to a row.
+ * (or `Page`). It also accepts a `Locator` so callers can scope lookups to a row,
+ * or a `FrameLocator` such as `activeEditor(page)` for the pane currently shown.
  */
-export type FrameLike = Frame | Page | Locator;
+export type FrameLike = Frame | Page | Locator | FrameLocator;
 
 export const buildCommonLocators = (frame: FrameLike) => ({
+  saveButton: () => frame.getByRole('button', { name: 'Save' }),
   sidebar: {
     collectionName: (name: string | RegExp) =>
       frame.getByTestId('sidebar-collection-row').filter({ hasText: name }),
@@ -18,6 +20,7 @@ export const buildCommonLocators = (frame: FrameLike) => ({
         .getByTestId('sidebar-collection-row'),
     collectionItem: (name: string) =>
       frame.getByTestId('sidebar-collection-item-row').filter({ hasText: name }),
+    folder: (name: string) => frame.getByTestId('sidebar-collection-item-row').filter({ hasText: name }).first(),
     folderChevron: () => frame.getByTestId('folder-chevron'),
     addMenu: () => frame.getByTestId('collections-header-add-menu'),
     addMenuCreate: () => frame.getByTestId('collections-header-add-menu-create'),
@@ -27,7 +30,10 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     actionMenuButton: (id: string) => frame.getByTestId(`collection-actions-${id}`),
     collectionMenuOptions: (name: string) =>
       frame.getByTestId('sidebar-collection-row').filter({ hasText: name }).getByTestId('collection-actions'),
-    runCollectionButton: () => frame.getByTestId('collection-actions-run')
+    runCollectionButton: () => frame.getByTestId('collection-actions-run'),
+    actionsItem: (id: string) => frame.getByTestId(`collection-actions-${id}`),
+    itemMenu: () => frame.getByTestId('collection-item-menu'),
+    itemMenuAction: (id: string) => frame.getByTestId(`collection-item-menu-${id}`)
   },
   importCollection: {
     container: () => frame.getByTestId('import-collection-container'),
@@ -136,6 +142,7 @@ export const buildCommonLocators = (frame: FrameLike) => ({
   },
   // VS Code workbench UI (not a webview) — pass the page to the factory.
   workbench: {
+    sidebarTitle: () => frame.locator('.part.sidebar .composite.title h2'),
     editorTab: (title: string) => frame.locator('.tabs-container .tab').filter({ hasText: title }),
     editorTabClose: (title: string) =>
       frame.locator('.tabs-container .tab').filter({ hasText: title }).locator('.tab-actions .action-label'),
@@ -146,6 +153,7 @@ export const buildCommonLocators = (frame: FrameLike) => ({
   },
   // New Request panel form.
   newRequest: {
+    container: () => frame.getByTestId('new-request-container'),
     typeOption: (type: string) => frame.locator('.request-type-option').filter({ hasText: type }),
     methodSelector: () => frame.locator('.method-selector-container .method-selector'),
     methodOption: (method: string) => frame.getByTestId(`new-request-method-${method.toLowerCase()}`),
@@ -179,7 +187,19 @@ export const buildCommonLocators = (frame: FrameLike) => ({
   },
   auth: {
     modeSelector: () => frame.locator('.auth-mode-selector'),
-    bearerTokenEditor: () => frame.locator('.single-line-editor-wrapper .CodeMirror').first()
+    inheritedMode: () => frame.locator('.inherit-mode-text'),
+    bearerTokenEditor: () => frame.getByTestId('auth-bearer-token').locator('.CodeMirror'),
+    basicUsernameEditor: () => frame.getByTestId('auth-basic-username').locator('.CodeMirror'),
+    basicPasswordEditor: () => frame.getByTestId('auth-basic-password').locator('.CodeMirror')
+  },
+  paneTabs: {
+    collectionSettingsTab: (key: string) => frame.getByTestId('collection-settings').locator(`[role="tab"].${key}`),
+    folderSettingsTab: (key: string) => frame.getByTestId('folder-settings').locator(`[role="tab"].${key}`)
+  },
+  timeline: {
+    lastItem: () => frame.getByTestId('timeline-entry').first(),
+    itemHeader: (item: Locator) => item.getByTestId('timeline-item-header'),
+    requestPanel: (item: Locator) => item.getByTestId('timeline-panel-request')
   },
   body: {
     modeSelector: () => frame.locator('.body-mode-selector'),
@@ -268,7 +288,7 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     incomingMessage: () => frame.locator('.ws-message.ws-incoming .message-content'),
     errorMessage: () => frame.locator('.ws-message.ws-error .message-content')
   },
-   runner: {
+  runner: {
     runCollectionButton: () => frame.getByRole('button', { name: 'Run Collection' }),
     runAgainButton: () => frame.getByRole('button', { name: 'Run Again' }),
     delayInput: () => frame.getByRole('spinbutton'),

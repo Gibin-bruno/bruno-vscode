@@ -12,6 +12,8 @@ import WsBody from '../WsBody/index';
 import StyledWrapper from './StyledWrapper';
 import WSAuth from './WSAuth';
 import WSSettingsPane from '../WSSettingsPane/index';
+import { hasEffectiveAuth } from 'utils/auth';
+import { AUTH_MODES_WS } from 'utils/common/constants';
 
 interface WSRequestPaneProps {
   item?: React.ReactNode;
@@ -92,7 +94,7 @@ const WSRequestPane = ({
 
   const headers = getPropertyFromDraftOrRequest(item, 'request.headers');
   const docs = getPropertyFromDraftOrRequest(item, 'request.docs');
-  const auth = getPropertyFromDraftOrRequest(item, 'request.auth');
+  const hasAuth = hasEffectiveAuth(collection, item, AUTH_MODES_WS);
 
   const activeHeadersLength = headers.filter((header: any) => header.enabled).length;
 
@@ -108,7 +110,7 @@ const WSRequestPane = ({
         </div>
         <div className={getTabClassname('auth')} role="tab" data-testid="request-tab-auth" onClick={() => selectTab('auth')}>
           Auth
-          {auth.mode !== 'none' && <StatusDot type="default" />}
+          {hasAuth && <StatusDot type="default" dataTestId="auth" />}
         </div>
         <div className={getTabClassname('settings')} role="tab" data-testid="request-tab-settings" onClick={() => selectTab('settings')}>
           Settings

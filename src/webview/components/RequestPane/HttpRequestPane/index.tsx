@@ -19,6 +19,7 @@ import StatusDot from 'components/StatusDot';
 import ResponsiveTabs from 'ui/ResponsiveTabs';
 import HeightBoundContainer from 'ui/HeightBoundContainer';
 import AuthMode from '../Auth/AuthMode/index';
+import { hasEffectiveAuth } from 'utils/auth';
 
 interface TAB_CONFIGProps {
   item?: React.ReactNode;
@@ -96,6 +97,11 @@ const HttpRequestPane = ({
     [dispatch, item.uid]
   );
 
+  const hasAuth = useMemo(
+    () => hasEffectiveAuth(collection, item),
+    [item, auth.mode, collection]
+  );
+
   const indicators: Record<string, React.ReactNode> = useMemo(() => {
     const hasScriptError = item.preRequestScriptErrorMessage || item.postResponseScriptErrorMessage;
     const hasTestError = item.testScriptErrorMessage;
@@ -104,7 +110,7 @@ const HttpRequestPane = ({
       params: activeCounts.params > 0 ? <sup className="font-medium">{activeCounts.params}</sup> : null,
       body: body.mode !== 'none' ? <StatusDot /> : null,
       headers: activeCounts.headers > 0 ? <sup className="font-medium">{activeCounts.headers}</sup> : null,
-      auth: auth.mode !== 'none' ? <StatusDot /> : null,
+      auth: hasAuth ? <StatusDot dataTestId="auth" /> : null,
       vars: activeCounts.vars > 0 ? <sup className="font-medium">{activeCounts.vars}</sup> : null,
       script: (script.req || script.res) ? (hasScriptError ? <StatusDot type="error" /> : <StatusDot />) : null,
       assert: activeCounts.assertions > 0 ? <sup className="font-medium">{activeCounts.assertions}</sup> : null,
@@ -112,7 +118,7 @@ const HttpRequestPane = ({
       docs: docs?.length > 0 ? <StatusDot /> : null,
       settings: tags?.length > 0 ? <StatusDot /> : null
     };
-  }, [activeCounts, body.mode, auth.mode, script, item.preRequestScriptErrorMessage, item.postResponseScriptErrorMessage, item.testScriptErrorMessage, tests, docs, tags]);
+  }, [activeCounts, body.mode, hasAuth, script, item.preRequestScriptErrorMessage, item.postResponseScriptErrorMessage, item.testScriptErrorMessage, tests, docs, tags]);
 
   const allTabs = useMemo(
     () => (appEnabled

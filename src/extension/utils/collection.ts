@@ -952,7 +952,7 @@ const mergeAuth = (collection: Collection, request: Request, requestTreePath: It
     if (i.type === 'folder') {
       const folderRoot = effectiveFolderRoot(i);
       const folderAuth = get(folderRoot, 'request.auth');
-      if (folderAuth && folderAuth.mode && folderAuth.mode !== 'none' && folderAuth.mode !== 'inherit') {
+      if (folderAuth && folderAuth.mode && folderAuth.mode !== 'inherit') {
         effectiveAuth = folderAuth;
         lastFolderWithAuth = i;
       }

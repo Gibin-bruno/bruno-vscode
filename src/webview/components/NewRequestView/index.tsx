@@ -455,7 +455,7 @@ const NewRequestView: React.FC<NewRequestViewProps> = ({ collection, itemUid, it
 
   return (
     <StyledWrapper>
-      <div className="new-request-container">
+      <div className="new-request-container" data-testid="new-request-container">
         <div className="new-request-header">
           <h1>
             <IconPlus size={22} strokeWidth={1.5} />
