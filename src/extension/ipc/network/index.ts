@@ -619,7 +619,7 @@ const getRequestData = (body: BrunoRequest['body']): unknown => {
   switch (body.mode) {
     case 'json':
       try {
-        return body.json ? JSON.parse(decomment(body.json)) : undefined;
+        return (body.json && decomment(body.json).trim()) || undefined;
       } catch {
         return body.json;
       }
