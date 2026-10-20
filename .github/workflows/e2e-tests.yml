@@ -10,7 +10,7 @@ on:
   # TEMPORARY: lets the workflow run from this branch before it is on main. Remove before merging.
   push:
     branches:
-      - tests/e2e
+      - tests/e2e_v2
 
 jobs:
   e2e:
