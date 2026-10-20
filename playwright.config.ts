@@ -5,8 +5,7 @@ export default defineConfig({
   timeout: 120_000,
   expect: { timeout: 15_000 },
   retries: process.env.CI ? 1 : 0,
-  // Each worker launches its own VS Code instance; locally they run one at a time.
-  workers: process.env.CI ? 2 : 1,
+  workers: 1, // VS Code tests must run serially (one instance at a time)
   globalSetup: './tests/e2e/global-setup.ts',
   globalTeardown: './tests/e2e/global-teardown.ts',
   reporter: process.env.CI ? [['list'], ['html']] : [['list']],

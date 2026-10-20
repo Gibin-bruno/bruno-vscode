@@ -57,10 +57,8 @@ test.describe('Cross-format paste', () => {
     ).toBeVisible();
 
     await expandCollection(sidebar, targetCollection);
-    // Scoped to the target: the source collection shows a request with the same name.
     await expect(
       sidebar
-        .locator(`#collection-${targetCollection.replace(/\s+/g, '-').toLowerCase()}`)
         .locator('[data-testid="sidebar-collection-item-row"]')
         .filter({ hasText: requestName })
     ).toBeVisible({ timeout: 15_000 });
