@@ -1550,7 +1550,7 @@ export async function fillRequestDetails(webview: FrameLocator, ctx: Context, ur
   await urlInput.pressSequentially(url);
 }
 
-export async function saveRequest(page: Page, webview: FrameLocator, ctx: Context, name: string, newRequest = true) {
+export async function saveRequestV2(page: Page, webview: FrameLocator, ctx: Context, name: string, newRequest = true) {
   await webview.getByTitle('Save Request').click();
   if (newRequest) {
     const workbench = buildCommonLocators(page).workbench;

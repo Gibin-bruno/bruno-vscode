@@ -1,5 +1,5 @@
 import { Page, expect } from "@playwright/test";
-import { createCollectionV2, createRequestV2, deleteRequestV2, exportCollectionV2, fillRequestDetails, openBrunoSidebar, saveRequest, sendRequest } from "./utils/page/actions";
+import { createCollectionV2, createRequestV2, deleteRequestV2, exportCollectionV2, fillRequestDetails, openBrunoSidebar, saveRequest, saveRequestV2, sendRequest } from "./utils/page/actions";
 
 type KeyValue<T = string | number | boolean> = {
   [k: string]: T,
@@ -59,7 +59,7 @@ export async function performE2E<const EnvName extends string = never>(config: C
           await sendRequest(requestWebview, 200)
         }
 
-        await saveRequest(page, requestWebview, ctx, request.name, true)
+        await saveRequestV2(page, requestWebview, ctx, request.name, true)
       }
 
       // Delete only after every request is saved, so deletes don't shift the "Untitled N" titles.
