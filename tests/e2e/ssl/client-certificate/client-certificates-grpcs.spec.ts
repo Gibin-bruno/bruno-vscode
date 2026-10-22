@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { Frame, Page } from '@playwright/test';
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import {
   CLIENT_CERT,
   CLIENT_KEY,
@@ -57,7 +58,7 @@ async function sendEcho(page: Page, editor: Frame, protoPath: string): Promise<v
 }
 
 test.describe('Collection client certificates - grpcs', () => {
-  test('a PEM cert/key is attached on grpcs', async ({ page, tmpDir }) => {
+  test('a PEM cert/key is attached on grpcs', deprecatedBy('tests/integration/ssl/client-certificates.test.ts', { notCovered: 'adding the certificate through the Client Certificates tab, loading the proto and picking the method in the UI' }), async ({ page, tmpDir }) => {
     const collectionName = 'Certs Grpc';
     const { sidebar, protoPath } = await setupGrpcCollection(page, tmpDir, collectionName);
 
@@ -86,7 +87,7 @@ test.describe('Collection client certificates - grpcs', () => {
     });
   });
 
-  test('a PFX bundle is attached on grpcs', async ({ page, tmpDir }) => {
+  test('a PFX bundle is attached on grpcs', deprecatedBy('tests/integration/ssl/client-certificates.test.ts', { notCovered: 'adding the PFX through the Client Certificates tab' }), async ({ page, tmpDir }) => {
     const collectionName = 'Certs Grpc Pfx';
     const { sidebar, protoPath } = await setupGrpcCollection(page, tmpDir, collectionName);
 

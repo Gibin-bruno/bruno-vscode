@@ -1,5 +1,5 @@
 import { Page, expect } from "@playwright/test";
-import { createCollectionV2, createRequestV2, deleteRequestV2, exportCollectionV2, fillRequestDetails, openBrunoSidebar, saveRequest, saveRequestV2, sendRequest } from "./utils/page/actions";
+import { createCollectionV2, createRequestV2, deleteRequestV2, exportCollectionV2, fillRequestDetails, openBrunoSidebar, saveRequestV2, sendRequest } from "./utils/page/actions";
 
 type KeyValue<T = string | number | boolean> = {
   [k: string]: T,

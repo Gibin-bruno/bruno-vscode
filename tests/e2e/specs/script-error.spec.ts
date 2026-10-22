@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { Page, Frame } from '@playwright/test';
 import { test, expect } from '../utils/fixtures';
+import { deprecatedBy } from '../utils/deprecated';
 import {
   openBrunoSidebar,
   createCollection,
@@ -53,7 +54,7 @@ const FAILING_PRE_REQUEST_BRU = [
 ].join('\n');
 
 test.describe('Script errors in the response pane', () => {
-  test('a failing post-response script renders a card with the source line and stack', async ({ page, tmpDir }) => {
+  test('a failing post-response script renders a card with the source line and stack', deprecatedBy('tests/integration/scripts/script-errors.test.ts', { notCovered: 'rendering the script error card, the stack toggle and closing the card' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Script Error';
 
@@ -82,7 +83,7 @@ test.describe('Script errors in the response pane', () => {
     await expect(card).toBeHidden();
   });
 
-  test('a failing pre-request script aborts the send and renders no response', async ({ page, tmpDir }) => {
+  test('a failing pre-request script aborts the send and renders no response', deprecatedBy('tests/integration/scripts/script-errors.test.ts', { notCovered: 'the card and the empty response pane' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Pre Request Script Error';
 
@@ -129,7 +130,7 @@ test.describe('Script errors in the response pane', () => {
     await expect(postResponseEditor.locator('.cm-error-line-flash')).toHaveCount(1);
   });
 
-  test('variables written before a script throws are still applied and persisted', async ({ page, tmpDir }) => {
+  test('variables written before a script throws are still applied and persisted', deprecatedBy('tests/integration/scripts/script-errors.test.ts', { notCovered: 'selecting the environment in the UI, and the webview writing the value to the environment file' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Partial Script Writes';
 
@@ -160,7 +161,7 @@ test.describe('Script errors in the response pane', () => {
     const envFile = path.join(collectionDir, 'environments', 'Local.bru');
     await expect.poll(() => fs.readFileSync(envFile, 'utf8'), { timeout: 15_000 }).toContain('envTok: ENVVAL');
   });
-  test('a failing collection-level script is attributed to the collection, not the request', async ({ page, tmpDir }) => {
+  test('a failing collection-level script is attributed to the collection, not the request', deprecatedBy('tests/integration/scripts/script-errors.test.ts', { notCovered: 'the source label and file path shown on the card' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Inherited Script Error';
 
@@ -190,7 +191,7 @@ test.describe('Script errors in the response pane', () => {
     await expect(card.locator('[data-testid="script-error-file-path"]')).toHaveText('collection.bru');
     await expect(card.locator('[data-testid="code-line-error"]')).toContainText("throw new Error('boom from collection')");
   });
-  test('an empty url with no script at all reports the url', async ({ page, tmpDir }) => {
+  test('an empty url with no script at all reports the url', deprecatedBy('tests/integration/scripts/script-errors.test.ts', { notCovered: 'the error shown in the response pane' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Empty Url';
 
@@ -208,7 +209,7 @@ test.describe('Script errors in the response pane', () => {
     await expect(editor.locator('.error').first()).toContainText('URL', { timeout: 15_000 });
     await expect(editor.locator('[data-testid="script-error-card"]')).toHaveCount(0);
   });
-  test('a failing pre-request script wins over a host that would not resolve', async ({ page, tmpDir }) => {
+  test('a failing pre-request script wins over a host that would not resolve', deprecatedBy('tests/integration/scripts/script-errors.test.ts', { notCovered: 'the card title and the absent response error' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Bad Host';
 
@@ -345,7 +346,7 @@ test.describe('Script errors in the response pane', () => {
     await expect(postResponse.locator('.cm-error-line-flash')).toHaveCount(0);
   });
 
-  test('a failing pre-request script wins over an empty url', async ({ page, tmpDir }) => {
+  test('a failing pre-request script wins over an empty url', deprecatedBy('tests/integration/scripts/script-errors.test.ts', { notCovered: 'the card title and the absent response error' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Empty Url Script';
 

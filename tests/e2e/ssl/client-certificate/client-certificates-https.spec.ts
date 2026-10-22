@@ -1,4 +1,5 @@
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import {
   CLIENT_CERT,
   CLIENT_KEY,
@@ -20,7 +21,7 @@ import { TLS_HANDSHAKE_FAILURE, addCertificate, storedCertPaths, openClientCerts
 const HTTPS_REQUEST = 'https-request';
 
 test.describe('Collection client certificates - https', () => {
-  test('a PEM cert/key is attached on https', async ({ page, tmpDir }) => {
+  test('a PEM cert/key is attached on https', deprecatedBy('tests/integration/ssl/client-certificates.test.ts', { notCovered: 'adding the certificate through the Client Certificates tab (file pickers, stored paths)' }), async ({ page, tmpDir }) => {
     const collectionName = 'Certs Pem';
     const sidebar = await openBrunoSidebar(page);
     await createCollection(page, sidebar, collectionName, tmpDir);
@@ -52,7 +53,7 @@ test.describe('Collection client certificates - https', () => {
     });
   });
 
-  test('a PFX bundle is attached on https', async ({ page, tmpDir }) => {
+  test('a PFX bundle is attached on https', deprecatedBy('tests/integration/ssl/client-certificates.test.ts', { notCovered: 'adding the PFX through the Client Certificates tab' }), async ({ page, tmpDir }) => {
     const collectionName = 'Certs Pfx';
     const sidebar = await openBrunoSidebar(page);
     await createCollection(page, sidebar, collectionName, tmpDir);

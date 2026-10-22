@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { Frame, Page } from '@playwright/test';
 import { test, expect } from '../utils/fixtures';
+import { deprecatedBy } from '../utils/deprecated';
 import {
   openBrunoSidebar,
   createCollection,
@@ -81,7 +82,7 @@ test.describe('.env files', () => {
     });
   });
 
-  test('keeps comments when saving from the raw view', async ({ page, tmpDir }) => {
+  test('keeps comments when saving from the raw view', deprecatedBy('tests/integration/environments/dotenv-files.test.ts', { notCovered: 'the raw view showing the content, and the "Changes saved successfully" message' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'DotEnv Raw Collection';
     await createCollection(page, sidebar, collectionName, tmpDir, 'bru');

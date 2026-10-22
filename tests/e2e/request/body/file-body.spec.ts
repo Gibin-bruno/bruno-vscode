@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { Frame } from '@playwright/test';
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import {
   openBrunoSidebar,
   createCollection,
@@ -46,7 +47,7 @@ async function attachFileBody(editor: Frame, filePath: string): Promise<void> {
 }
 
 test.describe('Request body: File / Binary', () => {
-  test('the picked file is uploaded as the raw request body', async ({ page, tmpDir }) => {
+  test('the picked file is uploaded as the raw request body', deprecatedBy('tests/integration/request/file-body.test.ts', { notCovered: 'picking the file in the Body tab, and the webview inferring the content type' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'File Body';
     const requestName = 'Upload File';

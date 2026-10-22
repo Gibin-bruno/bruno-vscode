@@ -3,6 +3,7 @@ import * as net from 'net';
 import * as path from 'path';
 import type { Frame } from '@playwright/test';
 import { test, expect } from '../utils/fixtures';
+import { deprecatedBy } from '../utils/deprecated';
 import { openBrunoSidebar, createCollection, openRequest, sendRequest, findCollectionDir } from '../utils/page/actions';
 
 const TEST_SERVER = 'http://127.0.0.1:8081';
@@ -111,7 +112,7 @@ test.describe('Response timeline', () => {
     await expect(entries).toHaveCount(0, { timeout: 10_000 });
   });
 
-  test('network logs carry the same detail as the desktop app', async ({ page, tmpDir }) => {
+  test('network logs carry the same detail as the desktop app', deprecatedBy('tests/integration/response/timeline.test.ts', { notCovered: 'the timeline and Network tab UI' }), async ({ page, tmpDir }) => {
     const collectionName = 'Timeline Network Logs';
     const { sidebar, collectionDir } = await setupCollection(page, collectionName, tmpDir);
 
@@ -134,7 +135,7 @@ test.describe('Response timeline', () => {
     await expect(logs).toContainText(/Request completed in \d+ ms/);
   });
 
-  test('network logs report the connection for a host VS Code proxies', async ({ page, tmpDir }) => {
+  test('network logs report the connection for a host VS Code proxies', deprecatedBy('tests/integration/response/timeline.test.ts', { notCovered: 'the timeline and Network tab UI' }), async ({ page, tmpDir }) => {
     test.skip(!(await ipv6LoopbackReachable(8081)), 'IPv6 loopback unavailable');
 
     const collectionName = 'Timeline Non Localhost';
@@ -154,7 +155,7 @@ test.describe('Response timeline', () => {
     await expect(logs).toContainText(/Connected to ::1/);
   });
 
-  test('network logs show the body of an error response as text', async ({ page, tmpDir }) => {
+  test('network logs show the body of an error response as text', deprecatedBy('tests/integration/response/timeline.test.ts', { notCovered: 'the timeline and Network tab UI' }), async ({ page, tmpDir }) => {
     const collectionName = 'Timeline Error Body';
     const { sidebar, collectionDir } = await setupCollection(page, collectionName, tmpDir);
 
@@ -190,7 +191,7 @@ test.describe('Response timeline', () => {
     await expect(editor.locator('[data-testid="timeline-item"]')).toHaveCount(1, { timeout: 10_000 });
   });
 
-  test('a failed request shows the axios error code as its status', async ({ page, tmpDir }) => {
+  test('a failed request shows the axios error code as its status', deprecatedBy('tests/integration/response/timeline.test.ts', { notCovered: 'the code shown on the timeline entry' }), async ({ page, tmpDir }) => {
     const collectionName = 'Timeline Errors';
     const { sidebar, collectionDir } = await setupCollection(page, collectionName, tmpDir);
 

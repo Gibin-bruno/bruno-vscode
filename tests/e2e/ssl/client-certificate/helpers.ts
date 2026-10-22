@@ -14,12 +14,8 @@ import { buildCommonLocators } from '../../utils/page/locators';
 
 const DOMAIN = 'localhost';
 
-// Node surfaces an mTLS rejection as an OpenSSL handshake alert.
-export const TLS_HANDSHAKE_FAILURE =
-  /certificate required|handshake failure|bad certificate|tlsv1.*alert|sslv3 alert|SSL alert number|SSL routines|socket hang up|EPROTO/i;
-
-export const GRPC_HANDSHAKE_FAILURE =
-  /UNAVAILABLE|handshake|certificate|Socket closed|ECONNRESET|received http2/i;
+// Defined next to the cert constants so the integration tests (which can't load Playwright) share them.
+export { TLS_HANDSHAKE_FAILURE, GRPC_HANDSHAKE_FAILURE } from './server/mtls-certs';
 
 async function pickFile(settings: Frame, field: 'cert' | 'key' | 'pfx', filePath: string): Promise<void> {
   const certs = buildCommonLocators(settings).clientCerts;

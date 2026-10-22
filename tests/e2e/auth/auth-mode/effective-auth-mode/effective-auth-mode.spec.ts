@@ -1,4 +1,5 @@
 import { test, expect } from '../../../utils/fixtures';
+import { deprecatedBy } from '../../../utils/deprecated';
 import {
   activeEditor,
   openBrunoSidebar,
@@ -18,7 +19,7 @@ import { buildCommonLocators } from '../../../utils/page/locators';
 test.use({ vscodeSettings: { 'files.simpleDialog.enable': true } });
 
 test.describe('Effective auth mode resolution', () => {
-  test('Inherit resolves to the nearest parent, stops at a No Auth folder, and sends no Authorization header', async ({ pageWithCollections: page }) => {
+  test('Inherit resolves to the nearest parent, stops at a No Auth folder, and sends no Authorization header', deprecatedBy('tests/integration/auth/effective-auth-mode.test.ts', { notCovered: 'setting auth modes in the settings panels, and the "Auth inherited from …" labels' }), async ({ pageWithCollections: page }) => {
     const collectionName = 'effective-auth-mode-collection';
     const sidebar = await openBrunoSidebar(page);
     const locators = buildCommonLocators(activeEditor(page));

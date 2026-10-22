@@ -1,5 +1,6 @@
 import * as path from 'path';
 import { test, expect } from '../utils/fixtures';
+import { deprecatedBy } from '../utils/deprecated';
 import type { Frame } from '@playwright/test';
 import {
   openBrunoSidebar,
@@ -96,7 +97,7 @@ test.describe('OAuth2 Authentication', () => {
 
   // ─── Client Credentials Grant ────────────────────────────────────────
 
-  test('Client Credentials (body placement): fetch token and send authenticated request', async ({ page, tmpDir }) => {
+  test('Client Credentials (body placement): fetch token and send authenticated request', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'filling the OAuth2 form and the token shown in the panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const editor = await setupOAuth2Request(page, sidebar, tmpDir, 'CC Body', 'Client Credentials');
 
@@ -106,7 +107,7 @@ test.describe('OAuth2 Authentication', () => {
     await sendRequest(currentEditor, 200);
   });
 
-  test('Client Credentials (basic auth header): fetch token and send authenticated request', async ({ page, tmpDir }) => {
+  test('Client Credentials (basic auth header): fetch token and send authenticated request', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'filling the OAuth2 form and the token shown in the panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const editor = await setupOAuth2Request(page, sidebar, tmpDir, 'CC Header', 'Client Credentials');
 
@@ -116,7 +117,7 @@ test.describe('OAuth2 Authentication', () => {
     await sendRequest(currentEditor, 200);
   });
 
-  test('Client Credentials with scope: scope sent in token request', async ({ page, tmpDir }) => {
+  test('Client Credentials with scope: scope sent in token request', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'filling the OAuth2 form and the token shown in the panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const editor = await setupOAuth2Request(page, sidebar, tmpDir, 'CC Scope', 'Client Credentials');
 
@@ -128,7 +129,7 @@ test.describe('OAuth2 Authentication', () => {
 
   // ─── Password Grant ──────────────────────────────────────────────────
 
-  test('Password Credentials (body placement): fetch token and send authenticated request', async ({ page, tmpDir }) => {
+  test('Password Credentials (body placement): fetch token and send authenticated request', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'filling the OAuth2 form and the token shown in the panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const editor = await setupOAuth2Request(page, sidebar, tmpDir, 'PW Body', 'Password Credentials');
 
@@ -151,7 +152,7 @@ test.describe('OAuth2 Authentication', () => {
     await sendRequest(currentEditor, 200);
   });
 
-  test('Password Credentials (basic auth header): fetch token and send authenticated request', async ({ page, tmpDir }) => {
+  test('Password Credentials (basic auth header): fetch token and send authenticated request', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'filling the OAuth2 form and the token shown in the panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const editor = await setupOAuth2Request(page, sidebar, tmpDir, 'PW Header', 'Password Credentials');
 
@@ -176,7 +177,7 @@ test.describe('OAuth2 Authentication', () => {
 
   // ─── Token Placement ─────────────────────────────────────────────────
 
-  test('Token placement: custom header prefix', async ({ page, tmpDir }) => {
+  test('Token placement: custom header prefix', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'filling the OAuth2 form and the token shown in the panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const editor = await setupOAuth2Request(page, sidebar, tmpDir, 'TP Prefix', 'Client Credentials');
 
@@ -186,7 +187,7 @@ test.describe('OAuth2 Authentication', () => {
     await sendRequest(currentEditor, 200);
   });
 
-  test('Token placement: URL query parameter', async ({ page, tmpDir }) => {
+  test('Token placement: URL query parameter', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'filling the OAuth2 form and the token shown in the panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const editor = await setupOAuth2Request(page, sidebar, tmpDir, 'TP URL', 'Client Credentials');
 
@@ -213,7 +214,7 @@ test.describe('OAuth2 Authentication', () => {
 
   // ─── Token Lifecycle ─────────────────────────────────────────────────
 
-  test('Clear cache: removes stored token', async ({ page, tmpDir }) => {
+  test('Clear cache: removes stored token', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'the token disappearing from the OAuth2 panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const editor = await setupOAuth2Request(page, sidebar, tmpDir, 'Token Cache', 'Client Credentials');
 
@@ -230,7 +231,7 @@ test.describe('OAuth2 Authentication', () => {
     await expect(tokenTitle).not.toBeVisible({ timeout: 10_000 });
   });
 
-  test('Refresh token: fetches new token', async ({ page, tmpDir }) => {
+  test('Refresh token: fetches new token', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'nothing yet: the integration test is skipped because of a refresh bug (see its comment)' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const editor = await setupOAuth2Request(page, sidebar, tmpDir, 'Refresh', 'Client Credentials');
 
@@ -261,7 +262,7 @@ test.describe('OAuth2 Authentication', () => {
 
   // ─── Interpolation ─────────────────────────────────────────────────
 
-  test('Interpolation: OAuth2 fields with {{variables}} resolve correctly', async ({ page, tmpDir }) => {
+  test('Interpolation: OAuth2 fields with {{variables}} resolve correctly', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'filling the OAuth2 form and the token shown in the panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const fixturePath = path.resolve(__dirname, 'fixtures/oauth2-interpolation-collection.json');
 
@@ -292,7 +293,7 @@ test.describe('OAuth2 Authentication', () => {
     await sendRequest(currentEditor, 200);
   });
 
-  test('Interpolation: OAuth2 additional parameters with {{variables}} resolve correctly', async ({ page, tmpDir }) => {
+  test('Interpolation: OAuth2 additional parameters with {{variables}} resolve correctly', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'the variable highlighting in the additional parameters editor' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const fixturePath = path.resolve(__dirname, 'fixtures/oauth2-additional-params-collection.json');
 
@@ -337,7 +338,7 @@ test.describe('OAuth2 Authentication', () => {
 
   // ─── Validation ──────────────────────────────────────────────────────
 
-  test('Validation: missing Client ID shows error toast', async ({ page, tmpDir }) => {
+  test('Validation: missing Client ID shows error toast', deprecatedBy('tests/integration/auth/oauth2.test.ts', { notCovered: 'the error toast' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const editor = await setupOAuth2Request(page, sidebar, tmpDir, 'Validation', 'Client Credentials');
 

@@ -1,5 +1,6 @@
 import type { Frame, Page } from '@playwright/test';
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import {
   CLIENT_CERT,
   CLIENT_KEY,
@@ -32,7 +33,7 @@ async function createWssCollection(page: Page, tmpDir: string, collectionName: s
 }
 
 test.describe('Collection client certificates - wss', () => {
-  test('a PEM cert/key is attached on wss', async ({ page, tmpDir }) => {
+  test('a PEM cert/key is attached on wss', deprecatedBy('tests/integration/ssl/client-certificates.test.ts', { notCovered: 'adding the certificate through the Client Certificates tab' }), async ({ page, tmpDir }) => {
     const collectionName = 'Certs Wss';
     const sidebar = await createWssCollection(page, tmpDir, collectionName);
 
@@ -61,7 +62,7 @@ test.describe('Collection client certificates - wss', () => {
     });
   });
 
-  test('a PFX bundle is attached on wss', async ({ page, tmpDir }) => {
+  test('a PFX bundle is attached on wss', deprecatedBy('tests/integration/ssl/client-certificates.test.ts', { notCovered: 'adding the PFX through the Client Certificates tab' }), async ({ page, tmpDir }) => {
     const collectionName = 'Certs Wss Pfx';
     const sidebar = await createWssCollection(page, tmpDir, collectionName);
 

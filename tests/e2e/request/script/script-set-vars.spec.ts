@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import { openBrunoSidebar, createCollection, openRequest, sendRequest } from '../../utils/page/actions';
 
 const TEST_SERVER = 'http://127.0.0.1:8081';
@@ -25,7 +26,7 @@ function findCollectionDir(root: string): string {
 }
 
 test.describe('Scripting: variable APIs', () => {
-  test('a pre-request script (bru.setVar) runs and its variable interpolates into the outgoing request', async ({ page, tmpDir }) => {
+  test('a pre-request script (bru.setVar) runs and its variable interpolates into the outgoing request', deprecatedBy('tests/integration/scripts/script-set-vars.test.ts'), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Script Vars';
 
@@ -68,7 +69,7 @@ test.describe('Scripting: variable APIs', () => {
     expect(token).toBe('ABC123');
   });
 
-  test('bru.setEnvVar / bru.deleteEnvVar take effect and persist to the environment file', async ({ page, tmpDir }) => {
+  test('bru.setEnvVar / bru.deleteEnvVar take effect and persist to the environment file', deprecatedBy('tests/integration/scripts/script-set-vars.test.ts', { notCovered: 'selecting the environment in the UI, and the webview writing the changes to the environment file' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Env Script Vars';
 

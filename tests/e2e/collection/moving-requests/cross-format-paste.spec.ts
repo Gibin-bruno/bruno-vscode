@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import {
   openBrunoSidebar,
   createCollection,
@@ -30,7 +31,7 @@ function walkFiles(dir: string): string[] {
 // sidebar. See VSCODE-75.
 test.describe('Cross-format paste', () => {
 
-  test('paste a request from a .bru collection into a .yml collection', async ({ page, tmpDir }) => {
+  test('paste a request from a .bru collection into a .yml collection', deprecatedBy('tests/integration/collection/cross-format-paste.test.ts', { notCovered: 'copy/paste through the sidebar menu, and the sidebar staying mounted' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
 
     const sourceCollection = 'Bru Source';

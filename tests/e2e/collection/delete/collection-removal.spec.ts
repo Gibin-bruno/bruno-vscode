@@ -1,4 +1,5 @@
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import {
   openBrunoSidebar,
   createCollection,
@@ -11,8 +12,7 @@ import { buildCommonLocators } from '../../utils/page/locators';
 
 test.describe('Collection removal', () => {
 
-  test('TC-3645: Verify that Removing the collection from the sidebar and does not reappear when creating a new collection', { tag: '@sanity' },
-    async ({ page, tmpDir }) => {
+  test('TC-3645: Verify that Removing the collection from the sidebar and does not reappear when creating a new collection', deprecatedBy('tests/integration/collection/collection-removal.test.ts', { tags: ['@sanity'], notCovered: 'removing through the sidebar menu and the sidebar rows' }), async ({ page, tmpDir }) => {
       const sidebar = await openBrunoSidebar(page);
       const collectionA = 'Collection A';
       const collectionB = 'Collection B';
@@ -49,7 +49,7 @@ test.describe('Collection removal', () => {
     }
   );
 
-  test('Removing and recreating a collection with the same name works', async ({ page, tmpDir }) => {
+  test('Removing and recreating a collection with the same name works', deprecatedBy('tests/integration/collection/collection-removal.test.ts', { notCovered: 'the sidebar rows' }), async ({ page, tmpDir }) => {
     const fs = require('fs');
     const path = require('path');
     const sidebar = await openBrunoSidebar(page);

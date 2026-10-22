@@ -1,4 +1,5 @@
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import {
   MTLS_URL,
   UNTRUSTED_CLIENT_CERT,
@@ -21,7 +22,7 @@ import {
 const HTTPS_REQUEST = 'https-request';
 
 test.describe('Collection client certificates - untrusted', () => {
-  test('an untrusted PEM cert/key is rejected at the handshake', async ({ page, tmpDir }) => {
+  test('an untrusted PEM cert/key is rejected at the handshake', deprecatedBy('tests/integration/ssl/client-certificates.test.ts', { notCovered: 'adding the certificate through the Client Certificates tab, the error in the response pane' }), async ({ page, tmpDir }) => {
     const collectionName = 'Certs Untrusted';
     const sidebar = await openBrunoSidebar(page);
     await createCollection(page, sidebar, collectionName, tmpDir);

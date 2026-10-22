@@ -1,5 +1,6 @@
 import * as path from 'path';
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import {
   openBrunoSidebar,
   createCollection,
@@ -39,7 +40,7 @@ test.describe('Collection management', () => {
     });
   });
 
-  test('Create a collection, send a request to echo.usebruno.com, and verify the response', { tag: '@regression' }, async ({ page, tmpDir }) => {
+  test('Create a collection, send a request to echo.usebruno.com, and verify the response', deprecatedBy('tests/integration/request/send-json.test.ts', { tags: ['@regression'], notCovered: 'creating the collection and request in the UI, setting the JSON body in the editor, the public echo.usebruno.com (the integration test uses the local test server)' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Echo Test';
     const requestName = 'Ping Echo';

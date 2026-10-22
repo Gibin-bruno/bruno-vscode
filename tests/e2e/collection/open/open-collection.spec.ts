@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import { openBrunoSidebar, openCollectionFromDisk, expandCollection } from '../../utils/page/actions';
 import { buildCommonLocators } from '../../utils/page/locators';
 
@@ -24,7 +25,7 @@ test.describe('Open collection', () => {
   ];
 
   for (const { title, fixture, name } of cases) {
-    test(`Verify user can open a collection with ${title}`, async ({ page, tmpDir }) => {
+    test(`Verify user can open a collection with ${title}`, deprecatedBy('tests/integration/collection/open-collection.test.ts', { notCovered: 'the collection row and its request in the sidebar, no error toast' }), async ({ page, tmpDir }) => {
       const sidebar = await openBrunoSidebar(page);
       const collectionPath = copyFixture(fixture, tmpDir);
       const sidebarLoc = buildCommonLocators(sidebar).sidebar;
@@ -46,7 +47,7 @@ test.describe('Open collection', () => {
     });
   }
 
-  test('Verify a collection with an invalid bruno.json is rejected', async ({ page, tmpDir }) => {
+  test('Verify a collection with an invalid bruno.json is rejected', deprecatedBy('tests/integration/collection/open-collection.test.ts', { notCovered: 'the "bruno.json format is invalid" toast' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionPath = copyFixture('bru-invalid-config', tmpDir);
 

@@ -17,6 +17,13 @@ export const CLIENT_PFX = path.join(CERTS_DIR, 'client.pfx');
 export const UNTRUSTED_CLIENT_CERT = path.join(CERTS_DIR, 'untrusted-client.crt');
 export const UNTRUSTED_CLIENT_KEY = path.join(CERTS_DIR, 'untrusted-client.key');
 
+// Node surfaces an mTLS rejection as an OpenSSL handshake alert.
+export const TLS_HANDSHAKE_FAILURE =
+  /certificate required|handshake failure|bad certificate|tlsv1.*alert|sslv3 alert|SSL alert number|SSL routines|socket hang up|EPROTO/i;
+
+export const GRPC_HANDSHAKE_FAILURE =
+  /UNAVAILABLE|handshake|certificate|Socket closed|ECONNRESET|received http2/i;
+
 /** Passphrase protecting `client.pfx`. */
 export const PFX_PASSPHRASE = 'bruno';
 

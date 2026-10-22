@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { Frame, Page } from '@playwright/test';
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import {
   openBrunoSidebar,
   createCollection,
@@ -44,7 +45,7 @@ async function stageSettingsEdits(
  * so they must be saved with a single IPC call.
  */
 test.describe('Collection settings save', () => {
-  test('yml: root and config changes both persist to opencollection.yml via a single write', async ({ page, tmpDir }) => {
+  test('yml: root and config changes both persist to opencollection.yml via a single write', deprecatedBy('tests/integration/collection/collection-settings-save.test.ts', { notCovered: 'that the webview saves a yml collection with a single IPC call, and the settings UI re-rendering the saved values' }), async ({ page, tmpDir }) => {
     const settings = await stageSettingsEdits(page, tmpDir, 'Yml Settings', 'yml');
 
     await recordIpcCalls(settings);
@@ -75,7 +76,7 @@ test.describe('Collection settings save', () => {
     });
   });
 
-  test('bru: root goes to collection.bru and config goes to bruno.json', async ({ page, tmpDir }) => {
+  test('bru: root goes to collection.bru and config goes to bruno.json', deprecatedBy('tests/integration/collection/collection-settings-save.test.ts', { notCovered: 'the IPC call counts made by the webview' }), async ({ page, tmpDir }) => {
     const settings = await stageSettingsEdits(page, tmpDir, 'Bru Settings', 'bru');
 
     await recordIpcCalls(settings);

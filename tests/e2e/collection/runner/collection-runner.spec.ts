@@ -1,4 +1,5 @@
 import { test, expect } from '../../utils/fixtures';
+import { deprecatedBy } from '../../utils/deprecated';
 import {
   addRequestTag,
   closeEditorTabIfOpen,
@@ -16,7 +17,7 @@ const TEST_SERVER = 'http://127.0.0.1:8081';
 
 test.describe('Collection runner', () => {
 
-  test('TC-3668: Verify that the user is able to execute all the request which are under the Collection using Run', { tag: '@sanity' }, async ({ page, tmpDir }) => {
+  test('TC-3668: Verify that the user is able to execute all the request which are under the Collection using Run', deprecatedBy('tests/integration/collection/collection-runner.test.ts', { tags: ['@sanity'], notCovered: 'the runner panel: request count, result rows, All/Passed/Failed filters' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Runner Collection';
     const requestName = 'Ping';
@@ -50,7 +51,7 @@ test.describe('Collection runner', () => {
     });
   });
 
-  test('TC-3667: Verify that the delay in the requests execution in the Collection run', { tag: '@sanity' }, async ({ page, tmpDir }) => {
+  test('TC-3667: Verify that the delay in the requests execution in the Collection run', deprecatedBy('tests/integration/collection/collection-runner.test.ts', { tags: ['@sanity'], notCovered: 'setting the delay in the runner panel, result rows and filters' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Delay Runner Collection';
     const firstRequest = 'Ping One';
@@ -100,7 +101,7 @@ test.describe('Collection runner', () => {
     });
   });
 
-  test('TC-3666: Verify the Include Tags functionality under Collection Run', { tag: '@sanity' }, async ({ page, tmpDir }) => {
+  test('TC-3666: Verify the Include Tags functionality under Collection Run', deprecatedBy('tests/integration/collection/collection-runner.test.ts', { tags: ['@sanity'], notCovered: 'tagging a request and including the tag in the runner panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Tagged Runner Collection';
     const taggedRequest = 'Smoke Request';
@@ -146,7 +147,7 @@ test.describe('Collection runner', () => {
     });
   });
 
-  test('TC-3665: Verify the Exclude Tags functionality under Collection Run', { tag: '@sanity' }, async ({ page, tmpDir }) => {
+  test('TC-3665: Verify the Exclude Tags functionality under Collection Run', deprecatedBy('tests/integration/collection/collection-runner.test.ts', { tags: ['@sanity'], notCovered: 'tagging a request and excluding the tag in the runner panel' }), async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     const collectionName = 'Exclude Runner Collection';
     const taggedRequest = 'Smoke Request';

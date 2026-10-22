@@ -28,6 +28,7 @@ import registerSimplePanelIpc from './ipc/simple-panel';
 import { registerCoreHandlers } from './ipc/handlers';
 
 import collectionWatcher, { setMessageSender as setWatcherMessageSender } from './app/collection-watcher';
+import { createTestApi, BrunoTestApi } from './test-api';
 import { setMessageSender as setCollectionsMessageSender, setEventEmitter as setCollectionsEventEmitter } from './app/collections';
 
 import { stateManager } from './webview/state-manager';
@@ -99,7 +100,7 @@ function setupMessageBroadcaster(): void {
   });
 }
 
-export function activate(context: vscode.ExtensionContext): void {
+export function activate(context: vscode.ExtensionContext): BrunoTestApi | undefined {
   // Guard against multiple activations (can happen during hot reload in dev)
   if (extensionActivated) {
     return;
@@ -209,6 +210,10 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
+  // Only exposed to integration tests (tests/integration), never to users.
+  if (context.extensionMode === vscode.ExtensionMode.Test) {
+    return createTestApi();
+  }
 }
 
 export function deactivate(): void {
