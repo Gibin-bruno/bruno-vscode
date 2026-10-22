@@ -257,6 +257,7 @@ export const buildCommonLocators = (frame: FrameLike) => ({
   response: {
     statusCode: () => frame.getByTestId('response-status-code'),
     previewContainer: () => frame.getByTestId('response-preview-container'),
+    loadingOverlay: () => frame.getByTestId('response-loading-overlay'),
     body: () => frame.getByTestId('response-status-code').locator('..'),
     error: () => frame.getByTestId('response-error')
   },
