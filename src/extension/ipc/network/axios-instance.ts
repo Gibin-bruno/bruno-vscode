@@ -8,6 +8,7 @@ import { NtlmClient, type NtlmCredentials } from 'axios-ntlm';
 import FormData from 'form-data';
 import https from 'https';
 import { URL } from 'url';
+import { isSameOrigin } from '@usebruno/common/utils';
 import type { NetworkLogEntry } from '@bruno-types';
 import { getCookieStringForUrl, saveCookies } from '../../utils/cookies';
 import { preferencesUtil } from '../../store/preferences';
@@ -308,6 +309,16 @@ const createAxiosInstance = (options: AxiosInstanceOptions = {}): AxiosInstance 
 
         if (originalRequest.url) {
           handleNtlmRedirect(requestConfig, originalRequest.url, redirectUrl, true);
+        }
+        
+        if (!isSameOrigin(originalRequest.url || '', redirectUrl)) {
+          for (const name of Object.keys(requestConfig.headers || {})) {
+            // Header names starting with x-amz- (any case), such as X-Amz-Date and X-Amz-Security-Token, belong to the AWS signature
+            if (/^x-amz-/i.test(name)) {
+              delete (requestConfig.headers as Record<string, unknown>)[name];
+            }
+          }
+          (requestConfig as { __skipAwsV4Sign?: boolean }).__skipAwsV4Sign = true;
         }
 
         const statusCode = error.response.status;
