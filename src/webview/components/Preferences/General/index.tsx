@@ -1,5 +1,6 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import get from 'lodash/get';
+import isEqual from 'lodash/isEqual';
 import debounce from 'lodash/debounce';
 import { useFormik } from 'formik';
 import { useSelector, useDispatch } from 'react-redux';
@@ -89,7 +90,7 @@ const General = () => {
   });
 
   const handleSave = useCallback((newPreferences: any) => {
-    dispatch(
+    return (dispatch(
       savePreferences({
         ...preferences,
         request: {
@@ -111,15 +112,28 @@ const General = () => {
           interval: newPreferences.autoSave.interval
         },
         general: get(preferences, 'general', { defaultCollectionLocation: '' })
-      }) as unknown as Promise<void>)
-      .catch((err: any) => { toast.error('Failed to update preferences'); });
+      })) as unknown as Promise<void>)
+      .then(() => true)
+      .catch((err: any) => {
+        toast.error('Failed to update preferences');
+        return false;
+      });
   }, [dispatch, preferences]);
+
+  const lastSavedValues = useRef(formik.initialValues);
 
   const debouncedSave = useCallback(
     debounce((values) => {
       preferencesSchema.validate(values, { abortEarly: true })
         .then((validatedValues) => {
-          handleSave(validatedValues);
+          // Record before saving: the save updates the store (re-running the effect below) before it resolves.
+          const previous = lastSavedValues.current;
+          lastSavedValues.current = values;
+          return handleSave(validatedValues).then((saved) => {
+            if (!saved) {
+              lastSavedValues.current = previous;
+            }
+          });
         })
         .catch((error) => {
         });
@@ -128,13 +142,13 @@ const General = () => {
   );
 
   useEffect(() => {
-    if (formik.dirty && formik.isValid) {
+    if (formik.isValid && !isEqual(formik.values, lastSavedValues.current)) {
       debouncedSave(formik.values);
     }
     return () => {
       debouncedSave.cancel();
     };
-  }, [formik.values, formik.dirty, formik.isValid, debouncedSave]);
+  }, [formik.values, formik.isValid, debouncedSave]);
 
   const addCaCertificate = () => {
     (dispatch(browseFiles([], ['openFile'])) as unknown as Promise<string[]>)

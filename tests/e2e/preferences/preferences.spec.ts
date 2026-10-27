@@ -167,6 +167,35 @@ test.describe('Preferences', () => {
     });
   });
 
+  test('changing a setting back to its original value is saved', async ({ page }) => {
+    const sidebar = await openBrunoSidebar(page);
+    let prefs = await openPreferences(page, sidebar);
+    let ui = buildCommonLocators(prefs).preferences;
+
+    await test.step('uncheck a setting, then check it again in the same panel session', async () => {
+      await changeAndWaitForSave(prefs, () => ui.storeCookies().uncheck());
+      await changeAndWaitForSave(prefs, () => ui.storeCookies().check());
+    });
+
+    await test.step('save a timeout, then change it and change it back', async () => {
+      await changeAndWaitForSave(prefs, () => ui.timeoutInput().fill('1234'));
+      await closeEditorTab(page, PANEL_TITLE);
+      prefs = await openPreferences(page, sidebar);
+      ui = buildCommonLocators(prefs).preferences;
+
+      await changeAndWaitForSave(prefs, () => ui.timeoutInput().fill('500'));
+      await changeAndWaitForSave(prefs, () => ui.timeoutInput().fill('1234'));
+    });
+
+    await test.step('the reverted values are what was persisted', async () => {
+      await closeEditorTab(page, PANEL_TITLE);
+      prefs = await openPreferences(page, sidebar);
+      ui = buildCommonLocators(prefs).preferences;
+      await expect(ui.storeCookies()).toBeChecked();
+      await expect(ui.timeoutInput()).toHaveValue('1234');
+    });
+  });
+
   test('Request Timeout is applied to outgoing requests', async ({ page, tmpDir }) => {
     const sidebar = await openBrunoSidebar(page);
     await setupCollection(page, sidebar, tmpDir, 'Timeout Prefs', {
