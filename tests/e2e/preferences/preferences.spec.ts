@@ -17,8 +17,11 @@ import {
 } from '../utils/page/actions';
 import { buildCommonLocators } from '../utils/page/locators';
 import { TEST_SERVER_LOCAL_URL } from '../utils/urls';
+import { UNTRUSTED_HTTPS_URL } from '../ssl/client-certificate/server/mtls-certs';
 
 const PANEL_TITLE = 'Bruno Preferences';
+// Node's error for a certificate whose issuing CA isn't trusted.
+const UNTRUSTED_CERT_ERROR = 'unable to verify the first certificate';
 const EXTENSION_VERSION = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, '../../../package.json'), 'utf8')
 ).version as string;
@@ -189,6 +192,32 @@ test.describe('Preferences', () => {
       await focusEditorTab(page, PANEL_TITLE);
       await changeAndWaitForSave(prefs, () => ui.timeoutInput().fill('0'));
       await focusEditorTab(page, 'Slow');
+      await sendRequest(editor, 200);
+    });
+  });
+
+  test('SSL/TLS Certificate Verification controls whether untrusted certificates are accepted', async ({ page, tmpDir }) => {
+    const sidebar = await openBrunoSidebar(page);
+    await setupCollection(page, sidebar, tmpDir, 'SSL Prefs', {
+      Untrusted: UNTRUSTED_HTTPS_URL
+    });
+
+    const prefs = await openPreferences(page, sidebar);
+    const ui = buildCommonLocators(prefs).preferences;
+    await expect(ui.sslVerification()).toBeChecked();
+
+    const editor = await openRequest(page, sidebar, 'SSL Prefs', 'Untrusted');
+    const response = buildCommonLocators(editor).response;
+
+    await test.step('with verification on, the untrusted certificate is rejected', async () => {
+      await buildCommonLocators(editor).sendRequest().click();
+      await expect(response.error()).toContainText(UNTRUSTED_CERT_ERROR, { timeout: 10_000 });
+    });
+
+    await test.step('turning verification off lets the request through', async () => {
+      await focusEditorTab(page, PANEL_TITLE);
+      await changeAndWaitForSave(prefs, () => ui.sslVerification().uncheck());
+      await focusEditorTab(page, 'Untrusted');
       await sendRequest(editor, 200);
     });
   });

@@ -3,6 +3,10 @@
  *
  *   HTTPS + WSS : https://localhost:8083   (wss://localhost:8083)
  *   gRPC (TLS)  : grpcs://localhost:8084    service echo.EchoService/Echo
+ *
+ * Plain HTTPS server whose certificate Bruno does not trust:
+ *
+ *   HTTPS       : https://localhost:8085   (no client certificate needed)
  */
 
 import * as fs from 'fs';
@@ -10,7 +14,7 @@ import * as https from 'https';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { WebSocketServer } from 'ws';
-import { CA_CERT, SERVER_CERT, SERVER_KEY, generateCerts } from './mtls-certs';
+import { CA_CERT, SERVER_CERT, SERVER_KEY, UNTRUSTED_SERVER_CERT, UNTRUSTED_SERVER_KEY, generateCerts } from './mtls-certs';
 import { GRPC_PROTO_PATH } from '../../../server/grpc';
 
 /** Describe the client certificate the peer presented. */
@@ -57,6 +61,25 @@ export function startMtlsServer(port: number): https.Server {
 
   server.listen(port, () => {
     console.log(`[mtls-server] Listening on https://localhost:${port} (wss - wss://localhost:8083)`);
+  });
+
+  return server;
+}
+
+/** HTTPS server whose certificate is signed by a CA the e2e VS Code does not trust. */
+export function startUntrustedHttpsServer(port: number): https.Server {
+  generateCerts();
+
+  const server = https.createServer(
+    { cert: fs.readFileSync(UNTRUSTED_SERVER_CERT), key: fs.readFileSync(UNTRUSTED_SERVER_KEY) },
+    (_req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ ok: true }));
+    }
+  );
+
+  server.listen(port, () => {
+    console.log(`[untrusted-https-server] Listening on https://localhost:${port}`);
   });
 
   return server;
