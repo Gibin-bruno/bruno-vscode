@@ -26,6 +26,7 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     addMenuCreate: () => frame.getByTestId('collections-header-add-menu-create'),
     openCollectionButton: () => frame.getByTestId('collections-header-add-menu-open'),
     addMenuImport: () => frame.getByTestId('collections-header-add-menu-import'),
+    preferencesButton: () => frame.getByRole('button', { name: 'Preferences' }),
     actionsMenu: () => frame.getByTestId('collection-actions'),
     actionMenuButton: (id: string) => frame.getByTestId(`collection-actions-${id}`),
     collectionMenuOptions: (name: string) =>
@@ -316,5 +317,19 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     resultDisplay: (name: string) => frame.locator('.item-path').filter({ hasText: name }),
     filterButton: (label: 'All' | 'Passed' | 'Failed' | 'Skipped') =>
       frame.getByRole('button', { name: label })
+  },
+  preferences: {
+    root: () => frame.getByTestId('preferences'),
+    tab: (name: 'General' | 'About') => frame.getByRole('tab', { name }),
+    timeoutInput: () => frame.locator('#timeout'),
+    storeCookies: () => frame.getByLabel('Store Cookies Automatically'),
+    sendCookies: () => frame.getByLabel('Send Cookies Automatically'),
+    autoSave: () => frame.getByLabel('Enable Auto Save'),
+    autoSaveInterval: () => frame.locator('#autoSaveInterval'),
+    error: () => frame.locator('.form-error'),
+    about: () => frame.getByTestId('preferences-about'),
+    aboutValue: (key: 'version' | 'os') => frame.getByTestId(`about-${key}`),
+    copyDetails: () => frame.getByRole('button', { name: 'Copy Details' }),
+    link: (name: string) => frame.getByRole('button', { name, exact: true })
   }
 });

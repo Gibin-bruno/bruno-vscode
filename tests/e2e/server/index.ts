@@ -4,6 +4,9 @@
  * Endpoints:
  *   GET  /ping                                    - Health check
  *   GET  /headers                                 - Echo request headers
+ *   GET  /cookies/set?name=&value=                - Respond with a Set-Cookie header
+ *   GET  /cookies/echo                            - Record the Cookie header as received
+ *   GET  /cookies/last                            - Read back the last recorded Cookie header
  *   POST /raw-body                                - Record the raw request body as received
  *   GET  /get-raw-body                            - Read back the last recorded raw body
  *   POST /api/echo/json                           - Echo JSON body
@@ -83,6 +86,20 @@ app.get('/capture', (req, res) => {
 });
 app.get('/last-capture', (_req, res) => {
   res.json({ token: lastCapturedToken ?? null });
+});
+
+// Cookie round-trip: lets e2e tests assert (from Node) which cookies the extension stored and sent.
+app.get('/cookies/set', (req, res) => {
+  res.cookie(String(req.query.name), String(req.query.value), { path: '/' });
+  res.json({ ok: true });
+});
+let lastCookieHeader: string | null = null;
+app.get('/cookies/echo', (req, res) => {
+  lastCookieHeader = req.headers.cookie ?? null;
+  res.json({ cookie: lastCookieHeader });
+});
+app.get('/cookies/last', (_req, res) => {
+  res.json({ cookie: lastCookieHeader });
 });
 
 // Minimal HTML page (with a relative asset) to exercise the HTML response preview's <base href>.
