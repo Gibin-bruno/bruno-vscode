@@ -13,12 +13,27 @@ import {
   runCommand,
   closeEditorTab,
   recordIpcCalls,
-  countIpcCalls
+  countIpcCalls,
+  createRequestByType,
+  openWsRequest,
+  openGrpcRequest,
+  loadGrpcProtoFile,
+  selectGrpcMethod,
+  setGrpcMessage
 } from '../utils/page/actions';
+import { fillOAuth2Field, selectDropdownItem } from '../utils/page/oauth2-actions';
 import { buildCommonLocators } from '../utils/page/locators';
 import { TEST_SERVER_LOCAL_URL } from '../utils/urls';
+import {
+  UNTRUSTED_GRPC_URL,
+  UNTRUSTED_HTTPS_URL,
+  UNTRUSTED_TOKEN_URL,
+  UNTRUSTED_WS_URL
+} from '../ssl/client-certificate/server/mtls-certs';
 
 const PANEL_TITLE = 'Bruno Preferences';
+// Node's error for a certificate whose issuing CA isn't trusted.
+const UNTRUSTED_CERT_ERROR = 'unable to verify the first certificate';
 const EXTENSION_VERSION = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, '../../../package.json'), 'utf8')
 ).version as string;
@@ -219,6 +234,123 @@ test.describe('Preferences', () => {
       await changeAndWaitForSave(prefs, () => ui.timeoutInput().fill('0'));
       await focusEditorTab(page, 'Slow');
       await sendRequest(editor, 200);
+    });
+  });
+
+  test('SSL/TLS Certificate Verification controls whether untrusted certificates are accepted', async ({ page, tmpDir }) => {
+    const sidebar = await openBrunoSidebar(page);
+    await setupCollection(page, sidebar, tmpDir, 'SSL Prefs', {
+      Untrusted: UNTRUSTED_HTTPS_URL
+    });
+
+    const prefs = await openPreferences(page, sidebar);
+    const ui = buildCommonLocators(prefs).preferences;
+    await expect(ui.sslVerification()).toBeChecked();
+
+    const editor = await openRequest(page, sidebar, 'SSL Prefs', 'Untrusted');
+    const response = buildCommonLocators(editor).response;
+
+    await test.step('with verification on, the untrusted certificate is rejected', async () => {
+      await buildCommonLocators(editor).sendRequest().click();
+      await expect(response.error()).toContainText(UNTRUSTED_CERT_ERROR, { timeout: 10_000 });
+    });
+
+    await test.step('turning verification off lets the request through', async () => {
+      await focusEditorTab(page, PANEL_TITLE);
+      await changeAndWaitForSave(prefs, () => ui.sslVerification().uncheck());
+      await focusEditorTab(page, 'Untrusted');
+      await sendRequest(editor, 200);
+    });
+  });
+
+  test('SSL/TLS Certificate Verification applies to WebSocket connections', async ({ page, tmpDir }) => {
+    const sidebar = await openBrunoSidebar(page);
+    await createCollection(page, sidebar, 'SSL Prefs Ws', tmpDir);
+    await createRequestByType(page, sidebar, 'SSL Prefs Ws', { name: 'Untrusted Ws', url: UNTRUSTED_WS_URL, type: 'WebSocket' });
+
+    const prefs = await openPreferences(page, sidebar);
+    const ui = buildCommonLocators(prefs).preferences;
+    await expect(ui.sslVerification()).toBeChecked();
+
+    const editor = await openWsRequest(page, sidebar, 'SSL Prefs Ws', 'Untrusted Ws');
+    const ws = buildCommonLocators(editor).ws;
+
+    await test.step('with verification on, the untrusted certificate is rejected', async () => {
+      await ws.connectButton().click();
+      await expect(ws.errorMessage().first()).toContainText(UNTRUSTED_CERT_ERROR, { timeout: 15_000 });
+    });
+
+    await test.step('turning verification off lets the connection through', async () => {
+      await focusEditorTab(page, PANEL_TITLE);
+      await changeAndWaitForSave(prefs, () => ui.sslVerification().uncheck());
+      await focusEditorTab(page, 'Untrusted Ws');
+      await ws.connectButton().click();
+      await expect(ws.incomingMessage().first()).toContainText('welcome', { timeout: 15_000 });
+    });
+  });
+
+  test('SSL/TLS Certificate Verification applies to gRPC requests', async ({ page, tmpDir }) => {
+    const sidebar = await openBrunoSidebar(page);
+    await createCollection(page, sidebar, 'SSL Prefs Grpc', tmpDir);
+    const protoPath = path.join(findCollectionDir(tmpDir, 'opencollection.yml'), 'echo.proto');
+    fs.copyFileSync(path.resolve(__dirname, '../utils/fixtures/echo.proto'), protoPath);
+    await createRequestByType(page, sidebar, 'SSL Prefs Grpc', { name: 'Untrusted Grpc', url: UNTRUSTED_GRPC_URL, type: 'gRPC' });
+
+    const prefs = await openPreferences(page, sidebar);
+    const ui = buildCommonLocators(prefs).preferences;
+    await expect(ui.sslVerification()).toBeChecked();
+
+    const editor = await openGrpcRequest(page, sidebar, 'SSL Prefs Grpc', 'Untrusted Grpc');
+    const grpc = buildCommonLocators(editor).grpc;
+    await loadGrpcProtoFile(editor, protoPath);
+    await selectGrpcMethod(editor, 'Echo');
+    await setGrpcMessage(page, editor, '{"message":"hi"}');
+
+    await test.step('with verification on, the untrusted certificate is rejected', async () => {
+      await grpc.sendRequestButton().click();
+      await expect(grpc.errorMessage()).toContainText(UNTRUSTED_CERT_ERROR, { timeout: 15_000 });
+    });
+
+    await test.step('turning verification off lets the request through', async () => {
+      await focusEditorTab(page, PANEL_TITLE);
+      await changeAndWaitForSave(prefs, () => ui.sslVerification().uncheck());
+      await focusEditorTab(page, 'Untrusted Grpc');
+      await grpc.sendRequestButton().click();
+      await expect(grpc.responseContent()).toContainText('untrusted ok', { timeout: 15_000 });
+    });
+  });
+
+  test('SSL/TLS Certificate Verification applies to OAuth2 token requests', async ({ page, tmpDir }) => {
+    const sidebar = await openBrunoSidebar(page);
+    await setupCollection(page, sidebar, tmpDir, 'SSL Prefs OAuth2', {
+      Protected: UNTRUSTED_HTTPS_URL
+    });
+
+    const prefs = await openPreferences(page, sidebar);
+    const ui = buildCommonLocators(prefs).preferences;
+    await expect(ui.sslVerification()).toBeChecked();
+
+    const editor = await openRequest(page, sidebar, 'SSL Prefs OAuth2', 'Protected');
+    await editor.locator('[role="tab"]').filter({ hasText: 'Auth' }).click();
+    await selectDropdownItem(editor, '[data-testid="oauth2-auth-mode-selector"]', 'OAuth 2.0');
+    await selectDropdownItem(editor, '[data-testid="oauth2-grant-type-selector"]', 'Client Credentials');
+    await fillOAuth2Field(page, editor, 'accessTokenUrl', UNTRUSTED_TOKEN_URL);
+    await fillOAuth2Field(page, editor, 'clientId', 'test-client');
+    const getToken = editor.locator('[data-testid="oauth2-get-token-btn"]');
+
+    await test.step('with verification on, the untrusted certificate is rejected', async () => {
+      await getToken.click();
+      await expect(editor.getByText('No access token received from authorization server')).toBeVisible({ timeout: 15_000 });
+      await expect(editor.locator('[data-testid="oauth2-token-title"]')).toHaveCount(0);
+    });
+
+    await test.step('turning verification off lets the token request through', async () => {
+      await focusEditorTab(page, PANEL_TITLE);
+      await changeAndWaitForSave(prefs, () => ui.sslVerification().uncheck());
+      await focusEditorTab(page, 'Protected');
+      await getToken.click();
+      await expect(editor.getByText('Token fetched successfully!')).toBeVisible({ timeout: 15_000 });
+      await expect(editor.locator('[data-testid="oauth2-token-title"]').first()).toBeVisible();
     });
   });
 

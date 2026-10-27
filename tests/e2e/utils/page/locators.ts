@@ -322,6 +322,7 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     root: () => frame.getByTestId('preferences'),
     tab: (name: 'General' | 'About') => frame.getByRole('tab', { name }),
     timeoutInput: () => frame.locator('#timeout'),
+    sslVerification: () => frame.getByLabel('SSL/TLS Certificate Verification'),
     storeCookies: () => frame.getByLabel('Store Cookies Automatically'),
     sendCookies: () => frame.getByLabel('Send Cookies Automatically'),
     autoSave: () => frame.getByLabel('Enable Auto Save'),

@@ -35,8 +35,8 @@ import * as http from 'http';
 import { WebSocketServer } from 'ws';
 import { oauth2Router } from './auth/oauth2';
 import { startGrpcServer } from './grpc';
-import { startMtlsServer, startMtlsGrpcServer } from '../ssl/client-certificate/server';
-import { MTLS_PORT, MTLS_GRPC_PORT } from '../ssl/client-certificate/server/mtls-certs';
+import { startMtlsServer, startMtlsGrpcServer, startUntrustedHttpsServer, startUntrustedGrpcServer } from '../ssl/client-certificate/server';
+import { MTLS_PORT, MTLS_GRPC_PORT, UNTRUSTED_HTTPS_PORT, UNTRUSTED_GRPC_PORT } from '../ssl/client-certificate/server/mtls-certs';
 
 const app = express();
 const port = Number(process.env.PORT) || 8081;
@@ -166,3 +166,7 @@ startGrpcServer(grpcPort);
 // mTLS servers — every request requires a client certificate.
 startMtlsServer(MTLS_PORT);
 startMtlsGrpcServer(MTLS_GRPC_PORT);
+
+// HTTPS, WSS and gRPC with a certificate Bruno does not trust, for the SSL verification preference.
+startUntrustedHttpsServer(UNTRUSTED_HTTPS_PORT);
+startUntrustedGrpcServer(UNTRUSTED_GRPC_PORT);
