@@ -205,19 +205,20 @@ const getCertsAndProxyConfig = async ({
 }: CertsAndProxyConfigParams): Promise<CertsAndProxyConfigResult> => {
   const httpsAgentRequestFields: HttpsAgentFields = { keepAlive: true };
 
-  if (!preferencesUtil.shouldVerifyTls()) {
+  if (preferencesUtil.shouldVerifyTls()) {
+    // CAs only matter when verifying, so a stale custom CA path can't break requests with verification off.
+    const caCertFilePath = preferencesUtil.shouldUseCustomCaCertificate()
+      ? preferencesUtil.getCustomCaCertificateFilePath() ?? undefined
+      : undefined;
+    const { caCertificates, caCertificatesCount } = getCACertificates({
+      caCertFilePath,
+      shouldKeepDefaultCerts: preferencesUtil.shouldKeepDefaultCaCertificates()
+    });
+    httpsAgentRequestFields.ca = caCertificates;
+    httpsAgentRequestFields.caCertificatesCount = caCertificatesCount;
+  } else {
     httpsAgentRequestFields.rejectUnauthorized = false;
   }
-
-  const caCertFilePath = preferencesUtil.shouldUseCustomCaCertificate()
-    ? preferencesUtil.getCustomCaCertificateFilePath() ?? undefined
-    : undefined;
-  const { caCertificates, caCertificatesCount } = getCACertificates({
-    caCertFilePath,
-    shouldKeepDefaultCerts: preferencesUtil.shouldKeepDefaultCaCertificates()
-  });
-  httpsAgentRequestFields.ca = caCertificates;
-  httpsAgentRequestFields.caCertificatesCount = caCertificatesCount;
 
   const { promptVariables } = collection;
   const collectionVariables = request.collectionVariables || {};

@@ -28,15 +28,20 @@ export const CLIENT_SUBJECT_CN = 'bruno-client';
 
 const BASE_PORT = Number(process.env.PORT || 8081);
 
-// HTTPS + WSS share one port (PORT + 2); mTLS gRPC takes (PORT + 3); the untrusted HTTPS server (PORT + 4).
+// HTTPS + WSS share one port (PORT + 2); mTLS gRPC takes (PORT + 3); the untrusted HTTPS + WSS server (PORT + 4);
+// the untrusted gRPC server (PORT + 5).
 export const MTLS_PORT = Number(process.env.MTLS_PORT) || BASE_PORT + 2;
 export const MTLS_GRPC_PORT = Number(process.env.MTLS_GRPC_PORT) || BASE_PORT + 3;
 export const UNTRUSTED_HTTPS_PORT = Number(process.env.UNTRUSTED_HTTPS_PORT) || BASE_PORT + 4;
+export const UNTRUSTED_GRPC_PORT = Number(process.env.UNTRUSTED_GRPC_PORT) || BASE_PORT + 5;
 
 export const MTLS_URL = `https://localhost:${MTLS_PORT}/`;
 export const MTLS_WS_URL = `wss://localhost:${MTLS_PORT}/`;
 export const MTLS_GRPC_URL = `grpcs://localhost:${MTLS_GRPC_PORT}`;
 export const UNTRUSTED_HTTPS_URL = `https://localhost:${UNTRUSTED_HTTPS_PORT}/`;
+export const UNTRUSTED_TOKEN_URL = `https://localhost:${UNTRUSTED_HTTPS_PORT}/token`;
+export const UNTRUSTED_WS_URL = `wss://localhost:${UNTRUSTED_HTTPS_PORT}/`;
+export const UNTRUSTED_GRPC_URL = `grpcs://localhost:${UNTRUSTED_GRPC_PORT}`;
 
 const CA_KEY = path.join(CERTS_DIR, 'ca.key');
 const UNTRUSTED_CA_CERT = path.join(CERTS_DIR, 'untrusted-ca.crt');

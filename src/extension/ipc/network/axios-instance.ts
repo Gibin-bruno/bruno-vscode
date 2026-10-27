@@ -15,7 +15,7 @@ import { preferencesUtil } from '../../store/preferences';
 import { safeStringifyJSON } from '../../utils/common';
 import { MultipartField, createFormData, formatMultipartData } from '../../utils/form-data';
 import { createConnectionLoggingTransport, sslValidationMessage } from './connection-log';
-import type { CACertificatesCount } from './cert-utils';
+import type { CACertificatesCount, CertsAndProxyConfigResult } from './cert-utils';
 
 // Import digest auth helper using require due to type declaration issues in @usebruno/requests
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -141,7 +141,6 @@ const createAxiosInstance = (options: AxiosInstanceOptions = {}): AxiosInstance 
   const connectionLoggingTransport = createConnectionLoggingTransport({
     log,
     timeout,
-    rejectUnauthorized: tlsOptions.rejectUnauthorized,
     caCertificatesCount: caCertificatesCount as Partial<CACertificatesCount> | undefined,
     proxyModeMessage,
     tlsOptions
@@ -336,7 +335,7 @@ const createAxiosInstance = (options: AxiosInstanceOptions = {}): AxiosInstance 
           log('info', `Changed method from ${originalMethod.toUpperCase()} to GET for ${statusCode} redirect and removed request body`);
         } else {
           if (requestConfig.data && typeof requestConfig.data === 'object' &&
-            requestConfig.data.constructor && requestConfig.data.constructor.name === 'FormData') {
+              requestConfig.data.constructor && requestConfig.data.constructor.name === 'FormData') {
             const formData = requestConfig.data as { _released?: boolean; _streams?: unknown[] };
             if (formData._released || (formData._streams && formData._streams.length === 0)) {
               if (originalRequest._originalMultipartData && (originalRequest.collectionPath || collectionPath)) {
@@ -397,6 +396,25 @@ const createAxiosInstance = (options: AxiosInstanceOptions = {}): AxiosInstance 
   return instance;
 };
 
+/** The TLS and proxy options of `createAxiosInstance`, from the result of `getCertsAndProxyConfig`. */
+const axiosOptionsFromCertsAndProxyConfig = ({
+  httpsAgentRequestFields,
+  proxyMode,
+  proxyConfig
+}: CertsAndProxyConfigResult): Pick<AxiosInstanceOptions, 'httpsAgentOptions' | 'proxyMode' | 'proxyConfig'> => ({
+  httpsAgentOptions: { ...httpsAgentRequestFields },
+  proxyMode,
+  proxyConfig: proxyMode === 'on' ? {
+    protocol: proxyConfig.protocol,
+    hostname: proxyConfig.hostname,
+    port: proxyConfig.port || undefined,
+    auth: proxyConfig.auth ? {
+      username: proxyConfig.auth.username,
+      password: proxyConfig.auth.password
+    } : undefined
+  } : undefined
+});
+
 /**
  * Make a request using a fresh axios instance
  */
@@ -411,6 +429,7 @@ const makeRequest = async (
 export default createAxiosInstance;
 export {
   createAxiosInstance,
+  axiosOptionsFromCertsAndProxyConfig,
   makeRequest,
   AxiosInstanceOptions
 };
