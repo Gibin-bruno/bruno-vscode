@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import classnames from 'classnames';
 import { updatedFolderSettingsSelectedTab } from 'providers/ReduxStore/slices/collections';
 import { useDispatch } from 'react-redux';
@@ -10,7 +10,7 @@ import Vars from './Vars';
 import Documentation from './Documentation';
 import Auth from './Auth';
 import StatusDot from 'components/StatusDot';
-import get from 'lodash/get';
+import { hasEffectiveAuth } from 'utils/auth';
 
 interface FolderSettingsProps {
   collection?: React.ReactNode;
@@ -40,8 +40,11 @@ const FolderSettings = ({
   const responseVars = folderRoot?.request?.vars?.res || [];
   const activeVarsCount = requestVars.filter((v: any) => v.enabled).length + responseVars.filter((v: any) => v.enabled).length;
 
-  const auth = get(folderRoot, 'request.auth.mode');
-  const hasAuth = auth && auth !== 'none';
+  const folderAuthMode = folderRoot?.request?.auth?.mode;
+  const hasAuth = useMemo(
+    () => hasEffectiveAuth(collection, folder),
+    [folder, folderAuthMode, collection]
+  );
 
   const setTab = (tab: any) => {
     dispatch(
@@ -104,7 +107,7 @@ const FolderSettings = ({
           </div>
           <div className={getTabClassname('auth')} role="tab" onClick={() => setTab('auth')}>
             Auth
-            {hasAuth && <StatusDot />}
+            {hasAuth && <StatusDot dataTestId="auth" />}
           </div>
           <div className={getTabClassname('docs')} role="tab" onClick={() => setTab('docs')}>
             Docs

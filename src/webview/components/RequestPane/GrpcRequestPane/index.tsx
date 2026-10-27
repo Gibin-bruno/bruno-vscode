@@ -12,6 +12,8 @@ import { find, get } from 'lodash';
 import Documentation from 'components/Documentation/index';
 import { useEffect } from 'react';
 import { getPropertyFromDraftOrRequest } from 'utils/collections/index';
+import { hasEffectiveAuth } from 'utils/auth';
+import { AUTH_MODES_GRPC } from 'utils/common/constants';
 
 interface GrpcRequestPaneProps {
   item?: React.ReactNode;
@@ -83,7 +85,7 @@ const GrpcRequestPane = ({
   const body = getPropertyFromDraftOrRequest(item, 'request.body');
   const headers = getPropertyFromDraftOrRequest(item, 'request.headers');
   const docs = getPropertyFromDraftOrRequest(item, 'request.docs');
-  const auth = getPropertyFromDraftOrRequest(item, 'request.auth');
+  const hasAuth = hasEffectiveAuth(collection, item, AUTH_MODES_GRPC);
 
   const activeHeadersLength = headers.filter((header: any) => header.enabled).length;
   const grpcMessagesCount = body?.grpc?.length || 0;
@@ -110,7 +112,7 @@ const GrpcRequestPane = ({
         </div>
         <div className={getTabClassname('auth')} role="tab" data-testid="request-tab-auth" onClick={() => selectTab('auth')}>
           Auth
-          {auth.mode !== 'none' && <StatusDot type="default" />}
+          {hasAuth && <StatusDot type="default" dataTestId="auth" />}
         </div>
         <div className={getTabClassname('docs')} role="tab" data-testid="request-tab-docs" onClick={() => selectTab('docs')}>
           Docs

@@ -51,6 +51,7 @@ import type {
   CloneItemPayload,
   ScriptEnvironmentUpdateEventPayload,
   ProcessEnvUpdateEventPayload,
+  SetDotEnvVariablesPayload,
   RequestCancelledPayload,
   ResponseReceivedPayload,
   ResponseClearedPayload,
@@ -1619,6 +1620,9 @@ export const collectionsSlice = createSlice({
       if (collection) {
         collection.items = collection.items || [];
         if (!collection.items.some((i: any) => i.uid === item.uid)) {
+          if (['queued', 'sending'].includes(item.requestState)) {
+            item.requestState = 'idle';
+          }
           collection.items.push(item);
         }
       }
@@ -2130,6 +2134,39 @@ export const collectionsSlice = createSlice({
       }
     },
 
+    setDotEnvVariables: (state, action: PayloadAction<SetDotEnvVariablesPayload>) => {
+      const { collectionUid, filename, variables, content, exists } = action.payload;
+      const collection = findCollectionByUid(state.collections, collectionUid);
+      if (!collection) {
+        return;
+      }
+
+      const dotEnvFiles = collection.dotEnvFiles || [];
+      const existingIndex = dotEnvFiles.findIndex((file) => file.filename === filename);
+
+      if (existingIndex >= 0) {
+        if (exists) {
+          dotEnvFiles[existingIndex] = { filename, variables, content };
+        } else {
+          dotEnvFiles.splice(existingIndex, 1);
+        }
+      } else if (exists) {
+        dotEnvFiles.push({ filename, variables, content });
+      }
+
+      dotEnvFiles.sort((a, b) => {
+        if (a.filename === '.env') {
+          return -1;
+        }
+        if (b.filename === '.env') {
+          return 1;
+        }
+        return a.filename.localeCompare(b.filename);
+      });
+
+      collection.dotEnvFiles = dotEnvFiles;
+    },
+
     clearTimeline: (state, action: PayloadAction<ClearTimelinePayload>) => {
       const collection = findCollectionByUid(state.collections, action.payload.collectionUid);
       if (collection) {
@@ -2286,10 +2323,13 @@ export const collectionsSlice = createSlice({
             return;
           }
 
-          // WS/gRPC use their own event-driven reducers for state management
-          // They should never show the loading overlay (requestState = 'sending')
-          const isStreamingRequest = item.type === 'ws-request' || item.type === 'grpc-request';
-          item.requestState = isStreamingRequest ? null : 'sending';
+          // Only queued/sent events show the loading overlay
+          if (type === 'request-queued' || type === 'request-sent') {
+            // WS/gRPC use their own event-driven reducers for state management
+            // They should never show the loading overlay (requestState = 'sending')
+            const isStreamingRequest = item.type === 'ws-request' || item.type === 'grpc-request';
+            item.requestState = isStreamingRequest ? null : 'sending';
+          }
 
           if (type === 'request-sent' && requestSent) {
             item.requestSent = requestSent;
@@ -3282,6 +3322,7 @@ export const {
   responseCleared,
   scriptEnvironmentUpdateEvent,
   processEnvUpdateEvent,
+  setDotEnvVariables,
   clearTimeline,
   clearRequestTimeline,
   collectionUnlinkEnvFileEvent,

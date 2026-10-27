@@ -1,14 +1,16 @@
-import { Frame, Page, Locator } from '@playwright/test';
+import { Frame, Page, Locator, FrameLocator } from '@playwright/test';
 
 /**
  * Centralised Playwright locators for the e2e suite.
  *
  * Bruno's UI runs inside VS Code webview iframes, so the factory takes a `Frame`
- * (or `Page`). It also accepts a `Locator` so callers can scope lookups to a row.
+ * (or `Page`). It also accepts a `Locator` so callers can scope lookups to a row,
+ * or a `FrameLocator` such as `activeEditor(page)` for the pane currently shown.
  */
-export type FrameLike = Frame | Page | Locator;
+export type FrameLike = Frame | Page | Locator | FrameLocator;
 
 export const buildCommonLocators = (frame: FrameLike) => ({
+  saveButton: () => frame.getByRole('button', { name: 'Save' }),
   sidebar: {
     collectionName: (name: string | RegExp) =>
       frame.getByTestId('sidebar-collection-row').filter({ hasText: name }),
@@ -18,12 +20,21 @@ export const buildCommonLocators = (frame: FrameLike) => ({
         .getByTestId('sidebar-collection-row'),
     collectionItem: (name: string) =>
       frame.getByTestId('sidebar-collection-item-row').filter({ hasText: name }),
+    folder: (name: string) => frame.getByTestId('sidebar-collection-item-row').filter({ hasText: name }).first(),
     folderChevron: () => frame.getByTestId('folder-chevron'),
     addMenu: () => frame.getByTestId('collections-header-add-menu'),
     addMenuCreate: () => frame.getByTestId('collections-header-add-menu-create'),
+    openCollectionButton: () => frame.getByTestId('collections-header-add-menu-open'),
     addMenuImport: () => frame.getByTestId('collections-header-add-menu-import'),
+    preferencesButton: () => frame.getByRole('button', { name: 'Preferences' }),
     actionsMenu: () => frame.getByTestId('collection-actions'),
-    actionsItem: (id: string) => frame.getByTestId(`collection-actions-${id}`)
+    actionMenuButton: (id: string) => frame.getByTestId(`collection-actions-${id}`),
+    collectionMenuOptions: (name: string) =>
+      frame.getByTestId('sidebar-collection-row').filter({ hasText: name }).getByTestId('collection-actions'),
+    runCollectionButton: () => frame.getByTestId('collection-actions-run'),
+    actionsItem: (id: string) => frame.getByTestId(`collection-actions-${id}`),
+    itemMenu: () => frame.getByTestId('collection-item-menu'),
+    itemMenuAction: (id: string) => frame.getByTestId(`collection-item-menu-${id}`)
   },
   importCollection: {
     container: () => frame.getByTestId('import-collection-container'),
@@ -80,6 +91,19 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     varSecretCheckbox: (name: string) => frame.getByTestId(`env-var-secret-${name}`),
     save: () => frame.getByTestId('save-env')
   },
+  dotEnv: {
+    section: () => frame.getByTestId('dotenv-files-section'),
+    createFile: () => frame.getByTestId('create-dotenv-file'),
+    file: (filename: string) => frame.getByTestId(`dotenv-file-${filename}`),
+    varRow: (name: string) => frame.getByTestId(`dotenv-var-row-${name}`),
+    varNameInputs: () => frame.locator('[data-testid^="dotenv-var-row-"] input[type="text"]'),
+    viewTable: () => frame.getByTestId('dotenv-view-table'),
+    viewRaw: () => frame.getByTestId('dotenv-view-raw'),
+    rawEditor: () => frame.getByTestId('dotenv-raw-editor').locator('.CodeMirror'),
+    save: () => frame.getByTestId('save-dotenv'),
+    saveRaw: () => frame.getByTestId('save-dotenv-raw'),
+    deleteFile: () => frame.getByTestId('delete-dotenv-file')
+  },
   requestUrl: {
     editor: () => frame.locator('#request-url'),
     highlightedToken: (name: string) =>
@@ -117,14 +141,20 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     // Menu option by request type: http | graphql | grpc | ws.
     option: (type: string) => frame.getByTestId(`collection-new-request-new-${type}`)
   },
-  // VS Code editor tab (workbench, not a webview) — pass the page to the factory.
+  // VS Code workbench UI (not a webview) — pass the page to the factory.
   workbench: {
+    sidebarTitle: () => frame.locator('.part.sidebar .composite.title h2'),
     editorTab: (title: string) => frame.locator('.tabs-container .tab').filter({ hasText: title }),
     editorTabClose: (title: string) =>
-      frame.locator('.tabs-container .tab').filter({ hasText: title }).locator('.tab-actions .action-label')
+      frame.locator('.tabs-container .tab').filter({ hasText: title }).locator('.tab-actions .action-label'),
+    quickInputBox: () => frame.locator('.quick-input-widget .quick-input-box input'),
+    notificationToasts: () => frame.locator('.notifications-toasts .notification-toast'),
+    getNotificationToastByText: (text: string) =>
+      frame.locator('.notifications-toasts .notification-toast').filter({ hasText: text })
   },
   // New Request panel form.
   newRequest: {
+    container: () => frame.getByTestId('new-request-container'),
     typeOption: (type: string) => frame.locator('.request-type-option').filter({ hasText: type }),
     methodSelector: () => frame.locator('.method-selector-container .method-selector'),
     methodOption: (method: string) => frame.getByTestId(`new-request-method-${method.toLowerCase()}`),
@@ -158,7 +188,25 @@ export const buildCommonLocators = (frame: FrameLike) => ({
   },
   auth: {
     modeSelector: () => frame.locator('.auth-mode-selector'),
-    bearerTokenEditor: () => frame.locator('.single-line-editor-wrapper .CodeMirror').first()
+    inheritedMode: () => frame.locator('.inherit-mode-text'),
+    bearerTokenEditor: () => frame.getByTestId('auth-bearer-token').locator('.CodeMirror'),
+    basicUsernameEditor: () => frame.getByTestId('auth-basic-username').locator('.CodeMirror'),
+    basicPasswordEditor: () => frame.getByTestId('auth-basic-password').locator('.CodeMirror'),
+    awsAccessKeyIdEditor: () => frame.getByTestId('auth-awsv4-access-key-id').locator('.CodeMirror'),
+    awsSecretAccessKeyEditor: () => frame.getByTestId('auth-awsv4-secret-access-key').locator('.CodeMirror'),
+    awsServiceEditor: () => frame.getByTestId('auth-awsv4-service').locator('.CodeMirror'),
+    awsRegionEditor: () => frame.getByTestId('auth-awsv4-region').locator('.CodeMirror')
+  },
+  paneTabs: {
+    collectionSettingsTab: (key: string) => frame.getByTestId('collection-settings').locator(`[role="tab"].${key}`),
+    folderSettingsTab: (key: string) => frame.getByTestId('folder-settings').locator(`[role="tab"].${key}`)
+  },
+  timeline: {
+    lastItem: () => frame.getByTestId('timeline-entry').first(),
+    itemHeader: (item: Locator) => item.getByTestId('timeline-item-header'),
+    requestPanel: (item: Locator) => item.getByTestId('timeline-panel-request'),
+    networkTab: (item: Locator) => item.getByRole('button', { name: 'Network', exact: true }),
+    networkPanel: (item: Locator) => item.getByTestId('timeline-panel-network')
   },
   body: {
     modeSelector: () => frame.locator('.body-mode-selector'),
@@ -216,6 +264,7 @@ export const buildCommonLocators = (frame: FrameLike) => ({
   response: {
     statusCode: () => frame.getByTestId('response-status-code'),
     previewContainer: () => frame.getByTestId('response-preview-container'),
+    loadingOverlay: () => frame.getByTestId('response-loading-overlay'),
     body: () => frame.getByTestId('response-status-code').locator('..'),
     error: () => frame.getByTestId('response-error')
   },
@@ -230,6 +279,10 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     addButton: () => frame.getByTestId('add-client-cert'),
     saveButton: () => frame.getByTestId('collection-settings-save')
   },
+  modal: {
+    confirm: () => frame.getByTestId('modal-confirm-button'),
+    cancel: () => frame.getByTestId('modal-cancel-button')
+  },
   // A dropdown menu item, by its visible text.
   dropdownItem: (text: string) => frame.locator('.dropdown-item').filter({ hasText: text }),
   // Send/run control shared by HTTP, GraphQL, WS and gRPC editors.
@@ -242,5 +295,41 @@ export const buildCommonLocators = (frame: FrameLike) => ({
     // Text of an incoming message in the WS response pane.
     incomingMessage: () => frame.locator('.ws-message.ws-incoming .message-content'),
     errorMessage: () => frame.locator('.ws-message.ws-error .message-content')
+  },
+  runner: {
+    runCollectionButton: () => frame.getByRole('button', { name: 'Run Collection' }),
+    runAgainButton: () => frame.getByRole('button', { name: 'Run Again' }),
+    delayInput: () => frame.getByRole('spinbutton'),
+    filterByTagsRadio: () => frame.getByLabel('Filter requests with tags'),
+    // Both fields share data-testid="tag-input". Scope each one to its label so the id resolves to one element.
+    includeTagInput: () =>
+      frame.getByText('Included tags:', { exact: true }).locator('..').getByTestId('tag-input'),
+    excludeTagInput: () =>
+      frame.getByText('Excluded tags:', { exact: true }).locator('..').getByTestId('tag-input'),
+    // Request Settings has a single tag field, so the id is unique there.
+    requestTagInput: () => frame.getByTestId('tag-input'),
+    // CodeMirror's hint list has no role or test id.
+    tagSuggestionList: () => frame.locator('.CodeMirror-hints'),
+    tagChipButton: (tag: string) => frame.getByRole('button', { name: tag }),
+    savedToastText: () => frame.getByText('Request saved successfully'),
+    requestCountText: () => frame.getByText(/requests in this collection/),
+    // Result block has no test id; the name and status sit together in this display.
+    resultDisplay: (name: string) => frame.locator('.item-path').filter({ hasText: name }),
+    filterButton: (label: 'All' | 'Passed' | 'Failed' | 'Skipped') =>
+      frame.getByRole('button', { name: label })
+  },
+  preferences: {
+    root: () => frame.getByTestId('preferences'),
+    tab: (name: 'General' | 'About') => frame.getByRole('tab', { name }),
+    timeoutInput: () => frame.locator('#timeout'),
+    storeCookies: () => frame.getByLabel('Store Cookies Automatically'),
+    sendCookies: () => frame.getByLabel('Send Cookies Automatically'),
+    autoSave: () => frame.getByLabel('Enable Auto Save'),
+    autoSaveInterval: () => frame.locator('#autoSaveInterval'),
+    error: () => frame.locator('.form-error'),
+    about: () => frame.getByTestId('preferences-about'),
+    aboutValue: (key: 'version' | 'os') => frame.getByTestId(`about-${key}`),
+    copyDetails: () => frame.getByRole('button', { name: 'Copy Details' }),
+    link: (name: string) => frame.getByRole('button', { name, exact: true })
   }
 });
