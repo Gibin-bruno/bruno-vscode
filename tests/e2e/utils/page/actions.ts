@@ -1513,24 +1513,20 @@ const requestTypeIdMap = {
 
 export async function createRequestV2(page: Page, _sidebar: Frame, ctx: Context, collectionName: string, type: RequestType, method: RequestMethod = 'GET') {
   const sidebar = _sidebar ?? await openBrunoSidebar(page);
+  const newRequestMenu = buildCommonLocators(sidebar).newRequestMenu;
   await sidebar.getByText(collectionName).hover()
-
-  // anti-pattern. test-id should not point to more than one element
-  const createNewRequestButton = sidebar.getByTestId('collection-new-request').filter({ visible: true })
-  await createNewRequestButton.click();
-
-  await sidebar.getByTestId(`collection-new-request-new-${requestTypeIdMap[type]}`).click();
+  await newRequestMenu.addButton(collectionName).click();
+  await newRequestMenu.option(collectionName, requestTypeIdMap[type]).click();
 
   const webview = await getWebviewByTitle(page, 'Untitled 1');
   expect(webview).toBeTruthy();
 
-  // anti-pattern: test-id should only point to a single element
-  const requestTypeDropdown = webview.getByTestId('menu-dropdown').first();
+  const requestTypeDropdown = webview.getByTestId('request-method');
   if ((await requestTypeDropdown.getAttribute('aria-expanded')) === 'false') {
     await requestTypeDropdown.click()
   }
 
-  await webview.getByTestId(`menu-dropdown-${method.toLowerCase()}`).click()
+  await webview.getByTestId(`request-method-${method.toLowerCase()}`).click()
 
   return webview;
 }
@@ -1597,7 +1593,7 @@ export async function deleteRequestV2(page: Page, sidebar: Frame, ctx: Context, 
 
   const requestRow = buildCommonLocators(sidebar).sidebar.collectionItem(name);
   await requestRow.hover();
-  await requestRow.getByTestId('collection-item-menu').click();
+  await buildCommonLocators(requestRow).sidebar.itemMenu(name).click();
   await sidebar.getByRole('menuitem', { name: 'Delete' }).click();
 
   // Modal confirmation from `vscode.window.showWarningMessage(..., { modal: true }, 'Delete')`
