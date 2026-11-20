@@ -49,7 +49,27 @@ export function getMessageSender(): MessageSender | null {
  * This is the primary function handlers should use - it automatically
  * routes to the correct webview based on which webview initiated the request
  */
+type OutboundListener = (channel: string, ...args: unknown[]) => void;
+const outboundListeners = new Set<OutboundListener>();
+
+/**
+ * Lets host-side code observe the events a handler reports while it runs (request progress, test
+ * results, console output), for surfaces that are not webviews.
+ */
+export function onOutboundEvent(listener: OutboundListener): vscode.Disposable {
+  outboundListeners.add(listener);
+  return new vscode.Disposable(() => outboundListeners.delete(listener));
+}
+
 export function sendToWebview(channel: string, ...args: unknown[]): void {
+  for (const listener of outboundListeners) {
+    try {
+      listener(channel, ...args);
+    } catch (error) {
+      console.error(`Error in outbound listener for ${channel}:`, error);
+    }
+  }
+
   // If we have a current webview context, send only to that webview
   if (currentWebview && webviewSender) {
     webviewSender(currentWebview, channel, ...args);

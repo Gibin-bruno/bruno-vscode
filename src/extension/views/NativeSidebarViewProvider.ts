@@ -14,6 +14,7 @@ import { generateUidBasedOnHash, sortByNameThenSequence } from '../utils/common'
 import { stripDirtyMarker } from '../utils/dirty-marker';
 import { basename, dirname, doesItExist, isInside, isSameDir, normalizeDir, readText, META_FILES } from '../utils/file';
 import { parseCollection, parseFolder } from '../utils/parse';
+import { requestEditorFor } from '../lite/lite-editor';
 
 
 export type Type = 'request' | 'folder' | 'collection';
@@ -769,7 +770,7 @@ export class Entity extends vscode.TreeItem {
       this.command = {
         command: 'vscode.openWith',
         title: 'Open Request',
-        arguments: [uri, BrunoEditorProvider.viewType]
+        arguments: [uri, requestEditorFor(requestType)]
       };
     }
   }

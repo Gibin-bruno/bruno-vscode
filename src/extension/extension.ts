@@ -43,6 +43,7 @@ import { registerTreeCommands, registerMainCommands } from './commands';
 import { registerDirtyStateHandlers, registerSaveHandler } from './editors/dirty-state-manager';
 import { createOAuth2UriHandler } from './ipc/network/authorize-user-in-system-browser';
 import { openTransientRequestPanel, type NewTransientRequest } from './panels/transient-request-panel';
+import { registerLiteRequestPage } from './lite/lite-editor';
 
 let extensionActivated = false;
 
@@ -130,6 +131,8 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     )
   );
+
+  registerLiteRequestPage(context);
 
   const workspaceCollectionsProvider = new WorkspaceCollectionsProvider();
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { mockDataFunctions } from '@usebruno/common';
 
 const CodeMirror = require('codemirror');
+import { STATIC_API_HINTS } from '../../../utils/script-api-hints';
 
 interface AllVariables {
   process?: {
@@ -16,104 +17,6 @@ interface AutoCompleteOptions {
   getAllVariables?: () => AllVariables;
   getAnywordAutocompleteHints?: () => string[];
 }
-
-// Static API hints - Bruno JavaScript API (subgrouped by category)
-const STATIC_API_HINTS = {
-  req: [
-    'req',
-    'req.url',
-    'req.method',
-    'req.headers',
-    'req.body',
-    'req.timeout',
-    'req.getUrl()',
-    'req.setUrl(url)',
-    'req.getMethod()',
-    'req.getAuthMode()',
-    'req.setMethod(method)',
-    'req.getHeader(name)',
-    'req.getHeaders()',
-    'req.setHeader(name, value)',
-    'req.setHeaders(data)',
-    'req.getBody()',
-    'req.setBody(data)',
-    'req.setMaxRedirects(maxRedirects)',
-    'req.getTimeout()',
-    'req.setTimeout(timeout)',
-    'req.getExecutionMode()',
-    'req.getName()',
-    'req.getTags()',
-    'req.disableParsingResponseJson()',
-    'req.onFail(function(err) {})'
-  ],
-  res: [
-    'res',
-    'res.status',
-    'res.statusText',
-    'res.headers',
-    'res.body',
-    'res.responseTime',
-    'res.url',
-    'res.getStatus()',
-    'res.getStatusText()',
-    'res.getHeader(name)',
-    'res.getHeaders()',
-    'res.getBody()',
-    'res.setBody(data)',
-    'res.getResponseTime()',
-    'res.getSize()',
-    'res.getSize().header',
-    'res.getSize().body',
-    'res.getSize().total',
-    'res.getUrl()'
-  ],
-  bru: [
-    'bru',
-    'bru.cwd()',
-    'bru.getEnvName()',
-    'bru.getProcessEnv(key)',
-    'bru.hasEnvVar(key)',
-    'bru.getEnvVar(key)',
-    'bru.getFolderVar(key)',
-    'bru.getCollectionVar(key)',
-    'bru.setEnvVar(key, value)',
-    'bru.setEnvVar(key, value, options)',
-    'bru.deleteEnvVar(key)',
-    'bru.hasVar(key)',
-    'bru.getVar(key)',
-    'bru.setVar(key,value)',
-    'bru.deleteVar(key)',
-    'bru.deleteAllVars()',
-    'bru.setNextRequest(requestName)',
-    'bru.getRequestVar(key)',
-    'bru.runRequest(requestPathName)',
-    'bru.getAssertionResults()',
-    'bru.getTestResults()',
-    'bru.sleep(ms)',
-    'bru.getCollectionName()',
-    'bru.isSafeMode()',
-    'bru.getGlobalEnvVar(key)',
-    'bru.setGlobalEnvVar(key, value)',
-    'bru.runner',
-    'bru.runner.setNextRequest(requestName)',
-    'bru.runner.skipRequest()',
-    'bru.runner.stopExecution()',
-    'bru.interpolate(str)',
-    'bru.cookies',
-    'bru.cookies.jar()',
-    'bru.cookies.jar().getCookie(url, name, callback)',
-    'bru.cookies.jar().getCookies(url, callback)',
-    'bru.cookies.jar().setCookie(url, name, value, callback)',
-    'bru.cookies.jar().setCookie(url, cookieObject, callback)',
-    'bru.cookies.jar().setCookies(url, cookiesArray, callback)',
-    'bru.cookies.jar().clear(callback)',
-    'bru.cookies.jar().deleteCookies(url, callback)',
-    'bru.cookies.jar().deleteCookie(url, name, callback)',
-    'bru.utils',
-    'bru.utils.minifyJson(json)',
-    'bru.utils.minifyXml(xml)'
-  ]
-};
 
 // Mock data functions - prefixed with $
 const MOCK_DATA_HINTS = Object.keys(mockDataFunctions).map((key) => `$${key}`);

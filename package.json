@@ -44,6 +44,37 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Bruno",
+      "properties": {
+        "bruno.request.editor": {
+          "type": "string",
+          "enum": [
+            "classic",
+            "lite"
+          ],
+          "default": "classic",
+          "enumDescriptions": [
+            "The full Bruno request editor.",
+            "Prototype: a small form with native VS Code surfaces for sending, environments, responses and code editing. HTTP requests only."
+          ],
+          "description": "Which editor HTTP requests open in from the Bruno sidebar."
+        },
+        "bruno.request.codeEditing": {
+          "type": "string",
+          "enum": [
+            "editor",
+            "inline"
+          ],
+          "default": "editor",
+          "enumDescriptions": [
+            "Body, scripts, tests and docs are shown read-only on the form and edited in VS Code editors.",
+            "Body, scripts, tests and docs are edited on the form; they can still be opened in a VS Code editor."
+          ],
+          "description": "Lite request editor: where body, scripts, tests and docs are edited."
+        }
+      }
+    },
     "icons": {
       "bruno-method-get": {
         "description": "HTTP GET request",
@@ -143,6 +174,11 @@
           "id": "brunoLogsContainer",
           "title": "Bruno Logs",
           "icon": "$(output)"
+        },
+        {
+          "id": "brunoResponseContainer",
+          "title": "Bruno Response",
+          "icon": "$(arrow-swap)"
         }
       ]
     },
@@ -170,6 +206,26 @@
           "name": "Bruno Collections",
           "when": "workbenchState != empty",
           "icon": "media/logo-sidebar.svg"
+        }
+      ],
+      "brunoResponseContainer": [
+        {
+          "id": "bruno.response.headers",
+          "name": "Headers",
+          "type": "tree",
+          "icon": "$(list-flat)"
+        },
+        {
+          "id": "bruno.response.tests",
+          "name": "Tests",
+          "type": "tree",
+          "icon": "$(beaker)"
+        },
+        {
+          "id": "bruno.response.timeline",
+          "name": "Timeline",
+          "type": "tree",
+          "icon": "$(history)"
         }
       ]
     },
@@ -446,19 +502,107 @@
         "title": "Delete",
         "category": "Bruno",
         "icon": "$(trash)"
+      },
+      {
+        "command": "bruno.lite.send",
+        "title": "Send Request",
+        "category": "Bruno",
+        "icon": "$(play)"
+      },
+      {
+        "command": "bruno.lite.selectEnvironment",
+        "title": "Select Environment",
+        "category": "Bruno",
+        "icon": "$(server-environment)"
+      },
+      {
+        "command": "bruno.lite.openClassic",
+        "title": "Open in Classic Bruno Editor",
+        "category": "Bruno",
+        "icon": "$(window)"
+      },
+      {
+        "command": "bruno.lite.open",
+        "title": "Open in Lite Bruno Editor",
+        "category": "Bruno"
+      },
+      {
+        "command": "bruno.lite.showResponse",
+        "title": "Show Last Response",
+        "category": "Bruno"
+      },
+      {
+        "command": "bruno.lite.response.toggleRaw",
+        "title": "Toggle Raw / Pretty Response",
+        "category": "Bruno",
+        "icon": "$(code)"
+      },
+      {
+        "command": "bruno.lite.response.filter",
+        "title": "Filter Response (JSONPath)",
+        "category": "Bruno",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "bruno.lite.response.preview",
+        "title": "Preview Response",
+        "category": "Bruno",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "bruno.lite.response.save",
+        "title": "Save Response",
+        "category": "Bruno",
+        "icon": "$(save)"
+      },
+      {
+        "command": "bruno.lite.clearTimeline",
+        "title": "Clear Timeline",
+        "category": "Bruno",
+        "icon": "$(clear-all)"
       }
     ],
     "menus": {
       "editor/title": [
         {
           "command": "bruno.switchFileEditor",
-          "when": "(resourceExtname == .bru || resourceExtname == .yml) && activeCustomEditorId != bruno.requestEditor",
+          "when": "(resourceExtname == .bru || resourceExtname == .yml) && activeCustomEditorId != bruno.requestEditor && activeCustomEditorId != bruno.requestEditor.lite",
           "group": "navigation"
         },
         {
           "command": "bruno.switchToTextEditor",
-          "when": "(resourceExtname == .bru || resourceExtname == .yml) && activeCustomEditorId == bruno.requestEditor",
+          "when": "(resourceExtname == .bru || resourceExtname == .yml) && (activeCustomEditorId == bruno.requestEditor || activeCustomEditorId == bruno.requestEditor.lite)",
           "group": "navigation"
+        },
+        {
+          "command": "bruno.lite.send",
+          "when": "activeCustomEditorId == bruno.requestEditor.lite",
+          "group": "navigation@1"
+        },
+        {
+          "command": "bruno.lite.openClassic",
+          "when": "activeCustomEditorId == bruno.requestEditor.lite",
+          "group": "navigation@9"
+        },
+        {
+          "command": "bruno.lite.response.toggleRaw",
+          "when": "resourceScheme == bruno-response",
+          "group": "navigation@1"
+        },
+        {
+          "command": "bruno.lite.response.filter",
+          "when": "resourceScheme == bruno-response",
+          "group": "navigation@2"
+        },
+        {
+          "command": "bruno.lite.response.preview",
+          "when": "resourceScheme == bruno-response",
+          "group": "navigation@3"
+        },
+        {
+          "command": "bruno.lite.response.save",
+          "when": "resourceScheme == bruno-response",
+          "group": "navigation@4"
         }
       ],
       "explorer/context": [
@@ -523,6 +667,11 @@
           "command": "bruno.sidebar.collapseAll",
           "when": "view == bruno.nativeSidebarView",
           "group": "tree@2"
+        },
+        {
+          "command": "bruno.lite.clearTimeline",
+          "when": "view == bruno.response.timeline",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -757,6 +906,19 @@
           }
         ],
         "priority": "option"
+      },
+      {
+        "viewType": "bruno.requestEditor.lite",
+        "displayName": "Bruno Request Editor (Lite)",
+        "selector": [
+          {
+            "filenamePattern": "*.bru"
+          },
+          {
+            "filenamePattern": "*.yml"
+          }
+        ],
+        "priority": "option"
       }
     ],
     "languages": [
@@ -783,6 +945,12 @@
       }
     ],
     "keybindings": [
+      {
+        "command": "bruno.lite.send",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "activeCustomEditorId == 'bruno.requestEditor.lite'"
+      },
       {
         "command": "bruno.saveFromEditor",
         "key": "ctrl+s",
@@ -832,7 +1000,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "npm run build:extension && npm run build:webview",
+    "build": "npm run build:extension && npm run build:webview && npm run build:webview-lite",
     "build:extension": "node esbuild.extension.mjs",
     "build:webview": "rsbuild build -c rsbuild.webview.config.mjs",
     "dev": "npm run dev:extension & npm run dev:webview",
@@ -852,7 +1020,9 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    "test:e2e:cursor": "CURSOR_PATH=$(which cursor 2>/dev/null || echo '') playwright test"
+    "test:e2e:cursor": "CURSOR_PATH=$(which cursor 2>/dev/null || echo '') playwright test",
+    "build:webview-lite": "node esbuild.webview-lite.mjs",
+    "dev:webview-lite": "node esbuild.webview-lite.mjs --watch"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
