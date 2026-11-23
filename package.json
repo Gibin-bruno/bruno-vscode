@@ -550,6 +550,12 @@
         "icon": "$(open-preview)"
       },
       {
+        "command": "bruno.lite.response.showSource",
+        "title": "Show Response Source",
+        "category": "Bruno",
+        "icon": "$(code)"
+      },
+      {
         "command": "bruno.lite.response.save",
         "title": "Save Response",
         "category": "Bruno",
@@ -602,6 +608,16 @@
         {
           "command": "bruno.lite.response.save",
           "when": "resourceScheme == bruno-response",
+          "group": "navigation@4"
+        },
+        {
+          "command": "bruno.lite.response.showSource",
+          "when": "activeWebviewPanelId == bruno.responsePreview",
+          "group": "navigation@1"
+        },
+        {
+          "command": "bruno.lite.response.save",
+          "when": "activeWebviewPanelId == bruno.responsePreview",
           "group": "navigation@4"
         }
       ],

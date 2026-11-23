@@ -6,7 +6,8 @@
  *  - Details live in the "Bruno Response" panel as three focused views (Headers, Tests, Timeline)
  *    instead of one long tree. The lens line links to them; the panel is only opened on its own when
  *    a test fails or a script errors.
- *  - One shared, on-demand preview panel renders HTML.
+ *  - An HTML response opens rendered, in one shared preview panel that takes the place of the
+ *    document; "Show source" switches that request back to the document.
  */
 import * as vscode from 'vscode';
 import xmlFormat from 'xml-formatter';
@@ -18,9 +19,11 @@ import { liteStore, isSuccess, summarize, formatSize, type ResponseEntry, type S
 const { JSONPath } = require('jsonpath-plus');
 
 export const RESPONSE_SCHEME = 'bruno-response';
+const PREVIEW_VIEW_TYPE = 'bruno.responsePreview';
 const COMPANION_SCHEMES = new Set([RESPONSE_SCHEME, 'bruno-part']);
 
-type View = { mode: 'pretty' | 'raw' } | { mode: 'filter'; expr: string };
+/** `preview` is the rendered page; the others are text in the response document. */
+type View = { mode: 'pretty' | 'raw' | 'preview' } | { mode: 'filter'; expr: string };
 type Kind = 'json' | 'xml' | 'html' | 'markdown' | 'text' | 'media' | 'binary';
 
 const contentTypeOf = (result: SendResult): string => {
@@ -157,7 +160,8 @@ function testCounts(entry: ResponseEntry): { passed: number; total: number; fail
 export function companionColumn(): vscode.ViewColumn {
   for (const group of vscode.window.tabGroups.all) {
     const holdsCompanion = group.tabs.some((tab) =>
-      tab.input instanceof vscode.TabInputText && COMPANION_SCHEMES.has(tab.input.uri.scheme));
+      (tab.input instanceof vscode.TabInputText && COMPANION_SCHEMES.has(tab.input.uri.scheme))
+      || (tab.input instanceof vscode.TabInputWebview && tab.input.viewType.endsWith(PREVIEW_VIEW_TYPE)));
     if (holdsCompanion) return group.viewColumn;
   }
   return vscode.ViewColumn.Beside;
@@ -176,6 +180,7 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
   const lensChanged = new vscode.EventEmitter<void>();
   let followed: string | undefined;
   let previewPanel: vscode.WebviewPanel | undefined;
+  let previewed: string | undefined; // the request whose response the preview panel shows
 
   const headers = new ListTree();
   const tests = new ListTree();
@@ -184,7 +189,13 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
   const testsView = vscode.window.createTreeView('bruno.response.tests', { treeDataProvider: tests });
   const timelineView = vscode.window.createTreeView('bruno.response.timeline', { treeDataProvider: timeline });
 
-  const viewOf = (filePath: string): View => views.get(filePath) || { mode: 'pretty' };
+  /** HTML opens rendered unless another view was chosen for the request; nothing else can be previewed here. */
+  const viewOf = (entry: ResponseEntry): View => {
+    const previewable = !!entry.result.status && kindOf(entry.result) === 'html';
+    const chosen = views.get(entry.filePath);
+    if (!chosen) return { mode: previewable ? 'preview' : 'pretty' };
+    return chosen.mode === 'preview' && !previewable ? { mode: 'pretty' } : chosen;
+  };
 
   /**
    * One document per request and view. The path carries no extension on purpose: the language is set
@@ -192,8 +203,8 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
    * while the old one stays on screen.
    */
   const uriFor = (entry: ResponseEntry): vscode.Uri => {
-    const mode = viewOf(entry.filePath).mode;
-    const suffix = mode === 'pretty' ? 'response' : mode === 'raw' ? 'response, raw' : 'response, filtered';
+    const mode = viewOf(entry).mode;
+    const suffix = mode === 'raw' ? 'response, raw' : mode === 'filter' ? 'response, filtered' : 'response';
     return vscode.Uri.from({
       scheme: RESPONSE_SCHEME,
       path: `/${entry.name.replace(/[\\/]/g, '-')} (${suffix})`,
@@ -206,7 +217,10 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
 
   /** The request a response command applies to: the response document in front, else the one followed. */
   const targetEntry = (uri?: vscode.Uri): ResponseEntry | undefined => {
-    const filePath = fileOf(uri) || fileOf(vscode.window.activeTextEditor?.document.uri) || followed;
+    const filePath = fileOf(uri)
+      || (previewPanel?.active ? previewed : undefined)
+      || fileOf(vscode.window.activeTextEditor?.document.uri)
+      || followed;
     return filePath ? liteStore.getResponse(filePath) : undefined;
   };
 
@@ -286,15 +300,38 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
     refreshPanel();
   };
 
-  const show = async (filePath: string): Promise<void> => {
-    const entry = liteStore.getResponse(filePath);
-    follow(filePath);
-    if (!entry) return;
+  /** Renders an HTML response in the shared preview panel, in place of the request's response document. */
+  const showPreview = async (entry: ResponseEntry): Promise<void> => {
+    if (!previewPanel) {
+      previewPanel = vscode.window.createWebviewPanel(
+        PREVIEW_VIEW_TYPE,
+        'Response',
+        { viewColumn: companionColumn(), preserveFocus: true },
+        { enableScripts: false, enableCommandUris: PREVIEW_COMMANDS }
+      );
+      previewPanel.onDidDispose(() => {
+        previewPanel = undefined;
+        previewed = undefined;
+      }, null, context.subscriptions);
+    }
+    previewed = entry.filePath;
+    previewPanel.title = `${entry.name} (response)`;
+    previewPanel.webview.html = previewHtml(
+      entry,
+      testCounts(entry),
+      liteStore.timelineFor(entry.collectionPath, entry.filePath).length
+    );
+    previewPanel.reveal(undefined, true);
 
-    const view = viewOf(filePath);
+    const documents = vscode.window.tabGroups.all
+      .flatMap((group) => group.tabs)
+      .filter((tab) => tab.input instanceof vscode.TabInputText && fileOf(tab.input.uri) === entry.filePath);
+    if (documents.length) await vscode.window.tabGroups.close(documents, true);
+  };
+
+  const showDocument = async (entry: ResponseEntry, view: View): Promise<void> => {
     const uri = uriFor(entry);
     contentChanged.fire(uri);
-    lensChanged.fire();
 
     let document = await vscode.workspace.openTextDocument(uri);
     const language = languageOf(entry.result, view);
@@ -305,6 +342,20 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
 
     // The document must never be left showing an earlier response: ask again if it still differs.
     if (document.getText() !== render(entry.result, view)) contentChanged.fire(uri);
+
+    // A preview of this request's earlier response would now be out of date.
+    if (previewed === entry.filePath) previewPanel?.dispose();
+  };
+
+  const show = async (filePath: string): Promise<void> => {
+    const entry = liteStore.getResponse(filePath);
+    follow(filePath);
+    if (!entry) return;
+
+    const view = viewOf(entry);
+    lensChanged.fire();
+    if (view.mode === 'preview') await showPreview(entry);
+    else await showDocument(entry, view);
 
     if (testCounts(entry).failed) void vscode.commands.executeCommand('bruno.response.tests.focus', { preserveFocus: true });
   };
@@ -339,23 +390,11 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
       await vscode.commands.executeCommand('vscode.open', await saveForPreview(entry), { preview: true });
       return;
     }
-    if (kind !== 'html') {
+    if (kind !== 'html' || !entry.result.status) {
       void vscode.window.showInformationMessage('Preview is available for HTML, Markdown, image, audio and video responses.');
       return;
     }
-
-    if (!previewPanel) {
-      previewPanel = vscode.window.createWebviewPanel(
-        'bruno.responsePreview',
-        'Response Preview',
-        { viewColumn: vscode.ViewColumn.Active, preserveFocus: true },
-        { enableScripts: false }
-      );
-      previewPanel.onDidDispose(() => (previewPanel = undefined), null, context.subscriptions);
-    }
-    previewPanel.title = `Preview: ${entry.name}`;
-    previewPanel.webview.html = previewHtml(rawText(entry.result), entry.result.requestUrl || entry.result.requestSent?.url || '');
-    previewPanel.reveal(undefined, true);
+    await setView(uri, { mode: 'preview' });
   };
 
   const lenses: vscode.CodeLensProvider = {
@@ -369,7 +408,7 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
       const lens = (title: string, command = '', tooltip?: string): vscode.CodeLens =>
         new vscode.CodeLens(range, { title, command, tooltip });
       const counts = testCounts(entry);
-      const view = viewOf(entry.filePath);
+      const view = viewOf(entry);
       const calls = liteStore.timelineFor(entry.collectionPath, entry.filePath).length;
 
       const line = [
@@ -386,6 +425,7 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
       }
       if (view.mode === 'raw') line.push(lens('Raw (click for pretty)', 'bruno.lite.response.toggleRaw'));
       if (view.mode === 'filter') line.push(lens(`Filtered: ${view.expr}`, 'bruno.lite.response.filter', 'Change or clear the filter'));
+      if (entry.result.status && kindOf(entry.result) === 'html') line.push(lens('Preview', 'bruno.lite.response.preview', 'Show the rendered page'));
       return line;
     }
   };
@@ -403,7 +443,7 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
       provideTextDocumentContent: (uri) => {
         const filePath = fileOf(uri);
         const entry = filePath ? liteStore.getResponse(filePath) : undefined;
-        return entry ? render(entry.result, viewOf(entry.filePath)) : '';
+        return entry ? render(entry.result, viewOf(entry)) : '';
       }
     }),
     vscode.languages.registerCodeLensProvider({ scheme: RESPONSE_SCHEME }, lenses),
@@ -426,12 +466,12 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
     vscode.commands.registerCommand('bruno.lite.response.toggleRaw', (uri?: vscode.Uri) => {
       const entry = targetEntry(uri);
       if (!entry) return;
-      return setView(uri, { mode: viewOf(entry.filePath).mode === 'raw' ? 'pretty' : 'raw' });
+      return setView(uri, { mode: viewOf(entry).mode === 'raw' ? 'pretty' : 'raw' });
     }),
     vscode.commands.registerCommand('bruno.lite.response.filter', async (uri?: vscode.Uri) => {
       const entry = targetEntry(uri);
       if (!entry) return;
-      const current = viewOf(entry.filePath);
+      const current = viewOf(entry);
       const expr = await vscode.window.showInputBox({
         title: 'Filter response',
         prompt: 'JSONPath expression. Leave empty to clear the filter.',
@@ -442,6 +482,8 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
       return setView(uri, expr.trim() ? { mode: 'filter', expr: expr.trim() } : { mode: 'pretty' });
     }),
     vscode.commands.registerCommand('bruno.lite.response.preview', preview),
+    vscode.commands.registerCommand('bruno.lite.response.showSource', (uri?: vscode.Uri) => setView(uri, { mode: 'pretty' })),
+    { dispose: () => previewPanel?.dispose() },
     vscode.commands.registerCommand('bruno.lite.response.save', async (uri?: vscode.Uri) => {
       const entry = targetEntry(uri);
       if (!entry) return;
@@ -460,18 +502,51 @@ export function registerResponseViews(context: vscode.ExtensionContext): Respons
 const escapeAttribute = (value: string): string =>
   value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
-/** A frame holding the response as-is. Scripts stay off; relative assets resolve against the request URL. */
-function previewHtml(html: string, baseUrl: string): string {
-  const document = baseUrl ? `<base href="${escapeAttribute(baseUrl)}">${html}` : html;
+/** Commands the preview's status line may run; nothing else is reachable from the panel. */
+const PREVIEW_COMMANDS = [
+  'bruno.response.headers.focus',
+  'bruno.response.tests.focus',
+  'bruno.response.timeline.focus',
+  'bruno.lite.response.showSource'
+];
+
+/**
+ * A status line (the same one the response document carries) above a frame holding the response
+ * as-is. Scripts stay off; relative assets resolve against the request URL.
+ */
+function previewHtml(entry: ResponseEntry, tests: { passed: number; total: number; failed: number }, calls: number): string {
+  const { result } = entry;
+  const baseUrl = result.requestUrl || result.requestSent?.url || '';
+  const page = baseUrl ? `<base href="${escapeAttribute(baseUrl)}">${rawText(result)}` : rawText(result);
+  const link = (label: string, command: string): string => `<a href="command:${command}">${escapeAttribute(label)}</a>`;
+
+  const status = [
+    `<span class="${isSuccess(result) ? 'ok' : 'bad'}">${escapeAttribute(summarize(result))}</span>`,
+    tests.total || tests.failed ? link(`Tests ${tests.passed}/${tests.total}`, 'bruno.response.tests.focus') : '',
+    link(`Headers (${Object.keys(result.headers || {}).length})`, 'bruno.response.headers.focus'),
+    link(`Timeline (${calls})`, 'bruno.response.timeline.focus'),
+    link('Show source', 'bruno.lite.response.showSource')
+  ].filter(Boolean).join('');
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: http: data:; style-src https: http: 'unsafe-inline'; font-src https: http: data:; frame-src 'self' about: data:;">
-  <style>html, body { height: 100%; margin: 0; padding: 0; } iframe { width: 100%; height: 100%; border: 0; background: #fff; }</style>
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body { display: flex; flex-direction: column; }
+    .status { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 6px 12px; border-bottom: 1px solid var(--vscode-panel-border, transparent); }
+    .status a { color: var(--vscode-textLink-foreground); text-decoration: none; }
+    .status a:hover, .status a:focus-visible { text-decoration: underline; }
+    .ok { color: var(--vscode-testing-iconPassed); }
+    .bad { color: var(--vscode-testing-iconFailed); }
+    iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+  </style>
 </head>
 <body>
-  <iframe title="Response preview" sandbox srcdoc="${escapeAttribute(document)}"></iframe>
+  <nav class="status" aria-label="Response">${status}</nav>
+  <iframe title="Rendered response" sandbox srcdoc="${escapeAttribute(page)}"></iframe>
 </body>
 </html>`;
 }
